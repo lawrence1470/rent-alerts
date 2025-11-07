@@ -141,10 +141,10 @@ function AnimatedBeamDemo() {
 
   return (
     <div
-      className="relative flex h-full w-full items-center justify-center overflow-hidden pt-6 px-10 pb-16"
+      className="relative flex h-full w-full items-center justify-center overflow-hidden pt-6 px-4 sm:px-8 md:px-10 pb-16"
       ref={containerRef}
     >
-      <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-10">
+      <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-6 sm:gap-8 md:gap-10">
         <div className="flex flex-col justify-center gap-2">
           <Circle ref={div1Ref}>
             <Home className="h-4 w-4" />
@@ -199,7 +199,7 @@ const features = [
     description: "Get notified the moment a rental matches your criteria",
     className: "md:col-span-2",
     header: (
-      <div className="flex flex-1 w-full h-full min-h-[12rem] items-center justify-center">
+      <div className="flex flex-1 w-full h-full min-h-[12rem] max-h-[20rem] items-center justify-center">
         <div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border bg-background/50 backdrop-blur-sm p-4">
           <div className="mb-3 flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-sm font-semibold">Live Listings</h3>

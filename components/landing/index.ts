@@ -1,5 +1,6 @@
 export { Navbar } from "./navbar";
 export { Hero } from "./hero";
+export { Showcase } from "./showcase";
 export { Features } from "./features";
 export { LiveFeed } from "./live-feed";
 export { TextRevealSection } from "./text-reveal-section";
