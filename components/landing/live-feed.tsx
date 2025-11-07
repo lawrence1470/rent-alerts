@@ -11,7 +11,7 @@ interface RentalNotification {
   time: string;
 }
 
-let notifications: RentalNotification[] = [
+const notifications: RentalNotification[] = [
   {
     name: "2BR Apartment",
     description: "$1,800/mo · Downtown",
@@ -69,8 +69,6 @@ let notifications: RentalNotification[] = [
     color: "#ED8936",
   },
 ];
-
-notifications = Array.from({ length: 10 }, () => notifications).flat();
 
 const RentalNotificationCard = ({ name, description, icon, color, time }: RentalNotification) => {
   return (
@@ -162,18 +160,20 @@ export function LiveFeed() {
 
           {/* Right side - Animated list */}
           <div className="flex items-center justify-center">
-            <div
-              className={cn(
-                "relative flex h-[500px] w-full flex-col overflow-hidden p-2"
-              )}
-            >
-              <AnimatedList>
+            <div className="relative flex h-[600px] w-full max-w-[450px] flex-col overflow-hidden rounded-lg border bg-background p-6 shadow-xl">
+              <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
+                <h3 className="text-lg font-semibold">Live Listings</h3>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                  <span className="text-xs text-muted-foreground">Live</span>
+                </div>
+              </div>
+              <AnimatedList delay={2000}>
                 {notifications.map((item, idx) => (
                   <RentalNotificationCard {...item} key={idx} />
                 ))}
               </AnimatedList>
-
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background"></div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
             </div>
           </div>
         </div>
