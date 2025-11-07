@@ -1,4 +1,4 @@
-import { Navbar, Hero, Features, LiveFeed, Stats, CTA, Footer } from "@/components/landing";
+import { Navbar, Hero, LiveFeed, Stats, CTA, Footer } from "@/components/landing";
 
 export default function Home() {
   return (
@@ -6,7 +6,6 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <Features />
         <LiveFeed />
         <Stats />
         <CTA />

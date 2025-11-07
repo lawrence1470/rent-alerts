@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export function CTA() {
   return (
-    <section className="relative overflow-hidden bg-primary px-4 py-24 text-primary-foreground sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-primary px-8 py-24 text-primary-foreground sm:px-12 lg:px-16 xl:px-24">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:14px_24px]" />
 

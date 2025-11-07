@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Logo } from "@/components/logo";
 
 const navItems = [
   {
@@ -41,22 +41,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 md:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 bg-primary/10 rounded-lg blur-sm group-hover:bg-primary/20 transition-colors" />
-            <div className="relative bg-gradient-to-br from-primary to-primary/80 rounded-lg p-1.5">
-              <Bell className="h-4 w-4 text-primary-foreground" />
-            </div>
-          </div>
-          <div className="hidden sm:flex flex-col">
-            <span className="text-sm font-bold leading-none tracking-tight">
-              RentNotify
-            </span>
-            <span className="text-[10px] text-muted-foreground leading-none mt-0.5">
-              Never miss a listing
-            </span>
-          </div>
-        </Link>
+        <Logo href="/" showText showTagline size="sm" className="hidden sm:flex" />
+        <Logo href="/" showText={false} size="sm" className="sm:hidden" />
 
         {/* Desktop Navigation - Centered */}
         <NavigationMenu className="hidden md:flex absolute left-1/2 -translate-x-1/2" viewport={isMobile}>
@@ -75,7 +61,6 @@ export function Navbar() {
 
         {/* Auth Section - Right */}
         <div className="flex items-center space-x-2">
-          <ThemeToggle />
           <SignedOut>
             <SignInButton mode="modal">
               <Button variant="ghost" size="sm">
