@@ -1,3 +1,2 @@
-export { Sidebar } from "./sidebar";
-export { MobileNav } from "./mobile-nav";
+export { Navbar } from "./navbar";
 export { DashboardLayout } from "./dashboard-layout";
