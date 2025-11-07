@@ -2,7 +2,7 @@
 
 import { forwardRef, useRef } from "react";
 import { AnimatedList } from "@/components/ui/animated-list";
-import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { AnimatedBeam } from "@/components/ui/animated-beam";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { Bell, Search, Zap, Target, Home, Building2, User } from "lucide-react";
@@ -194,15 +194,13 @@ function AnimatedBeamDemo() {
 
 const features = [
   {
-    Icon: Zap,
-    name: "Instant SMS Alerts",
+    icon: <Zap className="h-4 w-4 text-neutral-500" />,
+    title: "Instant SMS Alerts",
     description: "Get notified the moment a rental matches your criteria",
-    href: "",
-    cta: "",
-    className: "col-span-3 lg:col-span-2",
-    background: (
-      <div className="absolute inset-0 flex items-center justify-center p-6">
-        <div className="relative flex h-full w-full max-w-[400px] flex-col overflow-hidden rounded-lg border bg-background/50 backdrop-blur-sm p-4">
+    className: "md:col-span-2",
+    header: (
+      <div className="flex flex-1 w-full h-full min-h-[12rem] items-center justify-center">
+        <div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border bg-background/50 backdrop-blur-sm p-4">
           <div className="mb-3 flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-sm font-semibold">Live Listings</h3>
             <div className="flex items-center gap-2">
@@ -221,65 +219,55 @@ const features = [
     ),
   },
   {
-    Icon: Bell,
-    name: "Rent Stabilization Detection",
+    icon: <Bell className="h-4 w-4 text-neutral-500" />,
+    title: "Rent Stabilization Detection",
     description: "Know if a listing is rent stabilized before you apply",
-    href: "",
-    cta: "",
-    className: "col-span-3 lg:col-span-1",
-    background: (
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background p-8">
-          <div className="flex items-center gap-2 mb-1">
-            <Building2 className="h-6 w-6 text-primary" />
-            <span className="text-sm font-semibold text-foreground">
-              RENT STABILIZED
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <NumberTicker
-              value={74}
-              className="text-6xl font-bold tracking-tight text-primary"
-            />
-            <span className="text-4xl font-bold text-primary">%</span>
-          </div>
-          <p className="text-xs font-medium text-muted-foreground">
-            High Confidence
-          </p>
-          <div className="relative h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-1000"
-              style={{ width: '74%' }}
-            />
-          </div>
+    className: "",
+    header: (
+      <div className="flex flex-1 w-full h-full min-h-[12rem] flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-6 w-6 text-primary" />
+          <span className="text-sm font-semibold text-foreground">
+            RENT STABILIZED
+          </span>
         </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
+        <div className="flex items-baseline gap-2">
+          <NumberTicker
+            value={74}
+            className="text-6xl font-bold tracking-tight text-primary"
+          />
+          <span className="text-4xl font-bold text-primary">%</span>
+        </div>
+        <p className="text-xs font-medium text-muted-foreground">
+          High Confidence
+        </p>
+        <div className="relative h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-muted">
+          <div
+            className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-1000"
+            style={{ width: '74%' }}
+          />
+        </div>
       </div>
     ),
   },
   {
-    Icon: Search,
-    name: "Multiple Sources",
+    icon: <Search className="h-4 w-4 text-neutral-500" />,
+    title: "Multiple Sources",
     description: "Aggregating listings from all major rental platforms",
-    href: "",
-    cta: "",
-    className: "col-span-3 lg:col-span-1",
-    background: (
-      <div className="absolute inset-0">
+    className: "",
+    header: (
+      <div className="flex flex-1 w-full h-full min-h-[12rem] relative">
         <AnimatedBeamDemo />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
       </div>
     ),
   },
   {
-    Icon: Target,
-    name: "Stay Ahead of the Competition",
+    icon: <Target className="h-4 w-4 text-neutral-500" />,
+    title: "Stay Ahead of the Competition",
     description: "Act fast on new listings before anyone else",
-    href: "",
-    cta: "",
-    className: "col-span-3 lg:col-span-1",
-    background: (
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-muted/40 via-muted/20 to-background p-8">
+    className: "",
+    header: (
+      <div className="flex flex-1 w-full h-full min-h-[12rem] flex-col items-center justify-center gap-4 bg-gradient-to-br from-muted/40 via-muted/20 to-transparent p-6">
         <div className="flex flex-col items-center gap-2">
           <NumberTicker
             value={966000}
@@ -309,7 +297,7 @@ export function LiveFeed() {
 
         <BentoGrid>
           {features.map((feature, idx) => (
-            <BentoCard key={idx} {...feature} />
+            <BentoGridItem key={idx} {...feature} />
           ))}
         </BentoGrid>
       </div>

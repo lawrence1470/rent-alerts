@@ -285,6 +285,19 @@ export function listingMatchesAlert(listing: any, alert: Alert): boolean {
     return false;
   }
 
+  // Check rent stabilization filter
+  if (alert.filterRentStabilized) {
+    // Only include if confirmed or high probability
+    const isRentStabilized =
+      listing.rentStabilizedStatus === 'confirmed' ||
+      (listing.rentStabilizedStatus === 'probable' &&
+       listing.rentStabilizedProbability >= 0.70);
+
+    if (!isRentStabilized) {
+      return false;
+    }
+  }
+
   return true;
 }
 

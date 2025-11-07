@@ -8,7 +8,7 @@ import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-background via-background to-muted/20 px-8 py-24 sm:px-12 lg:px-16 xl:px-24">
+    <section className="relative min-h-screen overflow-hidden bg-gradient-to-b from-background via-background to-muted/20 px-8 sm:px-12 lg:px-16 xl:px-24 flex items-center">
       {/* Mobile Video Background - Only visible on mobile */}
       <div className="absolute inset-0 z-0 lg:hidden">
         <video
@@ -28,7 +28,7 @@ export function Hero() {
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" />
       <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/10 blur-[100px]" />
 
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl w-full py-12">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
           {/* Left side - Text content */}
           <div className="relative mx-auto max-w-3xl text-center lg:text-left lg:mx-0">

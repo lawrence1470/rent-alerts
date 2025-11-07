@@ -17,7 +17,7 @@ import { rebuildAllBatches } from '@/lib/services/alert-batching.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -29,9 +29,11 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     const alert = await db.query.alerts.findFirst({
       where: and(
-        eq(alerts.id, params.id),
+        eq(alerts.id, id),
         eq(alerts.userId, userId)
       ),
     });
@@ -60,7 +62,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -72,10 +74,12 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
+
     // Verify ownership
     const existingAlert = await db.query.alerts.findFirst({
       where: and(
-        eq(alerts.id, params.id),
+        eq(alerts.id, id),
         eq(alerts.userId, userId)
       ),
     });
@@ -103,7 +107,7 @@ export async function PATCH(
         isActive: body.isActive !== undefined ? body.isActive : existingAlert.isActive,
         updatedAt: new Date(),
       })
-      .where(eq(alerts.id, params.id))
+      .where(eq(alerts.id, id))
       .returning();
 
     // Rebuild batches to reflect changes
@@ -129,7 +133,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -141,10 +145,12 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // Verify ownership
     const existingAlert = await db.query.alerts.findFirst({
       where: and(
-        eq(alerts.id, params.id),
+        eq(alerts.id, id),
         eq(alerts.userId, userId)
       ),
     });
@@ -157,7 +163,7 @@ export async function DELETE(
     }
 
     // Delete alert (cascade will handle related records)
-    await db.delete(alerts).where(eq(alerts.id, params.id));
+    await db.delete(alerts).where(eq(alerts.id, id));
 
     // Rebuild batches
     await rebuildAllBatches();

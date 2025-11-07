@@ -252,7 +252,7 @@ export function getUserNotificationChannels(userId: string): NotificationChannel
  * Gets user's unread notification count
  */
 export async function getUnreadNotificationCount(userId: string): Promise<number> {
-  const notifications = await db.query.notifications.findMany({
+  const userNotifications = await db.query.notifications.findMany({
     where: and(
       eq(notifications.userId, userId),
       eq(notifications.channel, 'in_app'),
@@ -260,7 +260,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
     ),
   });
 
-  return notifications.length;
+  return userNotifications.length;
 }
 
 /**

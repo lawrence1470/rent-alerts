@@ -12,6 +12,7 @@ import { getActiveBatches, listingMatchesAlert } from './alert-batching.service'
 import { getStreetEasyClient } from './streeteasy-api.service';
 import { upsertListings, markListingsAsSeen } from './listing-deduplication.service';
 import { generateNotificationsForAlert, getUserNotificationChannels } from './notification.service';
+import { enrichListingsWithRentStabilization } from './rent-stabilization.service';
 
 // ============================================================================
 // MAIN CRON JOB
@@ -45,6 +46,15 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
 
         // Step 3: Upsert listings into database
         const dbListings = await upsertListings(apiListings);
+
+        // Step 3.5: Enrich listings with rent stabilization data
+        // Only enrich if there are listings that need enrichment
+        const listingIds = dbListings.map(l => l.id);
+        if (listingIds.length > 0) {
+          console.log(`Enriching ${listingIds.length} listings with rent stabilization data...`);
+          const enrichmentMetrics = await enrichListingsWithRentStabilization(listingIds);
+          console.log(`Enrichment complete: ${enrichmentMetrics.successCount}/${enrichmentMetrics.listingsProcessed} succeeded, ${enrichmentMetrics.failureCount} failed`);
+        }
 
         // Step 4: Get all alerts in this batch
         const batchAlerts = await db.query.alerts.findMany({

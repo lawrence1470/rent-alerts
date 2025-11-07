@@ -8,7 +8,7 @@
  * 4. Type-safe: Full TypeScript integration
  */
 
-import { pgTable, text, timestamp, integer, boolean, uuid, uniqueIndex, index, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, boolean, uuid, uniqueIndex, index, jsonb, real } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // ============================================================================
@@ -28,6 +28,7 @@ export const alerts = pgTable('alerts', {
   maxBeds: integer('max_beds'),
   minBaths: integer('min_baths'),
   noFee: boolean('no_fee').default(false),
+  filterRentStabilized: boolean('filter_rent_stabilized').default(false),
 
   // Alert Status
   isActive: boolean('is_active').default(true).notNull(),
@@ -125,6 +126,17 @@ export const listings = pgTable('listings', {
   listingUrl: text('listing_url').notNull(),
   imageUrl: text('image_url'),
 
+  // Location (for rent stabilization matching)
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+
+  // Rent Stabilization Data
+  rentStabilizedStatus: text('rent_stabilized_status').default('unknown'), // 'confirmed', 'probable', 'unlikely', 'unknown'
+  rentStabilizedProbability: real('rent_stabilized_probability'), // 0.0 to 1.0
+  rentStabilizedSource: text('rent_stabilized_source'), // 'dhcr_registry', 'heuristic', 'manual_verification'
+  rentStabilizedCheckedAt: timestamp('rent_stabilized_checked_at'),
+  buildingDhcrId: text('building_dhcr_id'), // DHCR building ID if found
+
   // Raw Data (store full API response for future reference)
   rawData: jsonb('raw_data'),
 
@@ -137,6 +149,8 @@ export const listings = pgTable('listings', {
   neighborhoodIdx: index('listings_neighborhood_idx').on(table.neighborhood),
   priceIdx: index('listings_price_idx').on(table.price),
   firstSeenAtIdx: index('listings_first_seen_at_idx').on(table.firstSeenAt),
+  buildingDhcrIdIdx: index('listings_building_dhcr_id_idx').on(table.buildingDhcrId),
+  rentStabilizedStatusIdx: index('listings_rent_stabilized_status_idx').on(table.rentStabilizedStatus),
   isActiveIdx: index('listings_is_active_idx').on(table.isActive),
 }));
 
@@ -228,6 +242,41 @@ export const cronJobLogs = pgTable('cron_job_logs', {
 }));
 
 // ============================================================================
+// BUILDING CACHE TABLE
+// ============================================================================
+// Cache building-level rent stabilization data to minimize API calls
+export const buildingCache = pgTable('building_cache', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  // Building identification (normalized)
+  addressNormalized: text('address_normalized').notNull(), // Normalized address for matching
+  latitude: real('latitude').notNull(),
+  longitude: real('longitude').notNull(),
+
+  // DHCR data
+  dhcrBuildingId: text('dhcr_building_id'),
+  dhcrLastUpdated: timestamp('dhcr_last_updated'),
+  isRentStabilized: boolean('is_rent_stabilized').notNull(),
+  stabilizedUnitCount: integer('stabilized_unit_count'),
+  totalUnitCount: integer('total_unit_count'),
+
+  // Heuristic data
+  heuristicProbability: real('heuristic_probability'),
+  buildingYearBuilt: integer('building_year_built'),
+
+  // Cache metadata
+  cacheHitCount: integer('cache_hit_count').default(0),
+  lastQueriedAt: timestamp('last_queried_at').defaultNow(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Composite index for geospatial lookups
+  locationIdx: index('building_cache_location_idx').on(table.latitude, table.longitude),
+  addressIdx: index('building_cache_address_idx').on(table.addressNormalized),
+  dhcrIdIdx: index('building_cache_dhcr_id_idx').on(table.dhcrBuildingId),
+}));
+
+// ============================================================================
 // DRIZZLE RELATIONS
 // ============================================================================
 export const alertsRelations = relations(alerts, ({ many }) => ({
@@ -298,3 +347,6 @@ export type NewNotification = typeof notifications.$inferInsert;
 
 export type CronJobLog = typeof cronJobLogs.$inferSelect;
 export type NewCronJobLog = typeof cronJobLogs.$inferInsert;
+
+export type BuildingCache = typeof buildingCache.$inferSelect;
+export type NewBuildingCache = typeof buildingCache.$inferInsert;

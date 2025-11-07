@@ -3,19 +3,11 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Building2, Plus } from "lucide-react";
+import { CreateAlertWizard } from "@/components/alerts/create-alert-wizard";
 
 export default function AlertsPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   return (
     <DashboardLayout>
@@ -29,41 +21,13 @@ export default function AlertsPage() {
             Get notified when new listings match your criteria
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Alert
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Alert</DialogTitle>
-              <DialogDescription>
-                Set up criteria for your rental search. We'll notify you when
-                new listings match.
-              </DialogDescription>
-            </DialogHeader>
-            {/* Form will go here */}
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Alert creation form coming soon...
-              </p>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={() => setIsDialogOpen(false)}>
-                Create Alert
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button className="gap-2" onClick={() => setIsWizardOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Create Alert
+        </Button>
       </div>
+
+      <CreateAlertWizard open={isWizardOpen} onOpenChange={setIsWizardOpen} />
 
       {/* Empty State */}
       <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -102,7 +66,7 @@ export default function AlertsPage() {
           rental listings match your search criteria.
         </p>
         <Button
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => setIsWizardOpen(true)}
           className="gap-2"
           size="lg"
         >

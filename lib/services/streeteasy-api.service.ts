@@ -11,17 +11,20 @@ import type { BatchCriteria } from './alert-batching.service';
 // ============================================================================
 export interface StreetEasyListing {
   id: string;
-  title: string;
-  address: string;
-  neighborhood: string;
   price: number;
-  bedrooms: number;
-  bathrooms: number;
+  longitude: number;
+  latitude: number;
+  url: string;
+  // These fields will be enriched from other sources or set to defaults
+  title?: string;
+  address?: string;
+  neighborhood?: string;
+  bedrooms?: number;
+  bathrooms?: number;
   sqft?: number;
-  noFee: boolean;
+  noFee?: boolean;
   listingUrl: string;
   imageUrl?: string;
-  // Add other fields as needed based on actual API response
 }
 
 export interface StreetEasySearchParams {
@@ -34,6 +37,20 @@ export interface StreetEasySearchParams {
   noFee?: boolean;
   limit?: number;
   offset?: number;
+}
+
+export interface StreetEasyApiResponse {
+  pagination: {
+    count: number;
+    nextOffset?: number;
+  };
+  listings: Array<{
+    id: string;
+    price: number;
+    longitude: number;
+    latitude: number;
+    url: string;
+  }>;
 }
 
 export interface StreetEasySearchResponse {
@@ -135,29 +152,32 @@ export class StreetEasyApiClient {
   }
 
   /**
-   * Transforms the API response to our internal format
-   * Adjust this based on the actual StreetEasy API response structure
+   * Transforms the actual StreetEasy API response to our internal format
+   * Based on the actual API response: {id, price, longitude, latitude, url}
    */
-  private transformResponse(data: any): StreetEasySearchResponse {
-    // This is a placeholder - adjust based on actual API response
-    const listings: StreetEasyListing[] = (data.listings || data.results || []).map((item: any) => ({
-      id: item.id || item.listingId || item.streetEasyId,
-      title: item.title || item.name || '',
-      address: item.address || item.location?.address || '',
-      neighborhood: item.neighborhood || item.location?.neighborhood || '',
-      price: parseInt(item.price || item.rent || '0'),
-      bedrooms: parseInt(item.bedrooms || item.beds || '0'),
-      bathrooms: parseFloat(item.bathrooms || item.baths || '0'),
-      sqft: item.sqft || item.squareFeet || undefined,
-      noFee: item.noFee || item.no_fee || false,
-      listingUrl: item.url || item.listingUrl || item.link || '',
-      imageUrl: item.imageUrl || item.image || item.photos?.[0] || undefined,
+  private transformResponse(data: StreetEasyApiResponse): StreetEasySearchResponse {
+    const listings: StreetEasyListing[] = data.listings.map((item) => ({
+      id: item.id,
+      price: item.price,
+      longitude: item.longitude,
+      latitude: item.latitude,
+      url: item.url,
+      listingUrl: item.url, // Use the same URL for listingUrl
+
+      // These fields are not in the API response but are needed for the database
+      // They can be enriched later or set to defaults
+      title: `Listing ${item.id}`, // Placeholder title
+      address: '', // Will be enriched from PLUTO data or scraping
+      neighborhood: '', // Will be determined from coordinates
+      bedrooms: 0, // Will need to be scraped or use defaults
+      bathrooms: 0, // Will need to be scraped or use defaults
+      noFee: false, // Conservative default, can be updated
     }));
 
     return {
       listings,
-      total: data.total || listings.length,
-      hasMore: data.hasMore || false,
+      total: data.pagination.count,
+      hasMore: data.pagination.nextOffset !== undefined,
     };
   }
 }

@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       maxBeds: body.maxBeds ?? null,
       minBaths: body.minBaths ?? null,
       noFee: body.noFee ?? false,
+      filterRentStabilized: body.filterRentStabilized ?? false,
       isActive: body.isActive ?? true,
     }).returning();
 
