@@ -1,6 +1,11 @@
 "use client";
 
+import { forwardRef, useRef } from "react";
 import { AnimatedList } from "@/components/ui/animated-list";
+import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
+import { AnimatedBeam } from "@/components/ui/animated-beam";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { Bell, Search, Zap, Target, Home, Building2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RentalNotification {
@@ -107,40 +112,206 @@ const RentalNotificationCard = ({ name, description, icon, color, time }: Rental
   );
 };
 
+const Circle = forwardRef<
+  HTMLDivElement,
+  { className?: string; children?: React.ReactNode }
+>(({ className, children }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "z-10 flex size-12 items-center justify-center rounded-full border-2 border-border bg-background p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+});
+
+Circle.displayName = "Circle";
+
+function AnimatedBeamDemo() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const div1Ref = useRef<HTMLDivElement>(null);
+  const div2Ref = useRef<HTMLDivElement>(null);
+  const div3Ref = useRef<HTMLDivElement>(null);
+  const div4Ref = useRef<HTMLDivElement>(null);
+  const div5Ref = useRef<HTMLDivElement>(null);
+
+  return (
+    <div
+      className="relative flex h-full w-full items-center justify-center overflow-hidden pt-6 px-10 pb-16"
+      ref={containerRef}
+    >
+      <div className="flex size-full max-w-lg flex-row items-stretch justify-between gap-10">
+        <div className="flex flex-col justify-center gap-2">
+          <Circle ref={div1Ref}>
+            <Home className="h-4 w-4" />
+          </Circle>
+          <Circle ref={div2Ref}>
+            <Building2 className="h-4 w-4" />
+          </Circle>
+          <Circle ref={div3Ref}>
+            <Search className="h-4 w-4" />
+          </Circle>
+        </div>
+        <div className="flex flex-col justify-center">
+          <Circle ref={div4Ref} className="size-16">
+            <Bell className="h-8 w-8 text-primary" />
+          </Circle>
+        </div>
+        <div className="flex flex-col justify-center">
+          <Circle ref={div5Ref}>
+            <User className="h-4 w-4" />
+          </Circle>
+        </div>
+      </div>
+
+      <AnimatedBeam
+        containerRef={containerRef}
+        fromRef={div1Ref}
+        toRef={div4Ref}
+      />
+      <AnimatedBeam
+        containerRef={containerRef}
+        fromRef={div2Ref}
+        toRef={div4Ref}
+      />
+      <AnimatedBeam
+        containerRef={containerRef}
+        fromRef={div3Ref}
+        toRef={div4Ref}
+      />
+      <AnimatedBeam
+        containerRef={containerRef}
+        fromRef={div4Ref}
+        toRef={div5Ref}
+      />
+    </div>
+  );
+}
+
+const features = [
+  {
+    Icon: Zap,
+    name: "Instant SMS Alerts",
+    description: "Get notified the moment a rental matches your criteria",
+    href: "",
+    cta: "",
+    className: "col-span-3 lg:col-span-2",
+    background: (
+      <div className="absolute inset-0 flex items-center justify-center p-6">
+        <div className="relative flex h-full w-full max-w-[400px] flex-col overflow-hidden rounded-lg border bg-background/50 backdrop-blur-sm p-4">
+          <div className="mb-3 flex items-center justify-between border-b border-border pb-3">
+            <h3 className="text-sm font-semibold">Live Listings</h3>
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+              <span className="text-xs text-muted-foreground">Live</span>
+            </div>
+          </div>
+          <AnimatedList delay={2000}>
+            {notifications.map((item, idx) => (
+              <RentalNotificationCard {...item} key={idx} />
+            ))}
+          </AnimatedList>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
+        </div>
+      </div>
+    ),
+  },
+  {
+    Icon: Bell,
+    name: "Rent Stabilization Detection",
+    description: "Know if a listing is rent stabilized before you apply",
+    href: "",
+    cta: "",
+    className: "col-span-3 lg:col-span-1",
+    background: (
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/20 via-primary/10 to-background p-8">
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 className="h-6 w-6 text-primary" />
+            <span className="text-sm font-semibold text-foreground">
+              RENT STABILIZED
+            </span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <NumberTicker
+              value={74}
+              className="text-6xl font-bold tracking-tight text-primary"
+            />
+            <span className="text-4xl font-bold text-primary">%</span>
+          </div>
+          <p className="text-xs font-medium text-muted-foreground">
+            High Confidence
+          </p>
+          <div className="relative h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-1000"
+              style={{ width: '74%' }}
+            />
+          </div>
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
+      </div>
+    ),
+  },
+  {
+    Icon: Search,
+    name: "Multiple Sources",
+    description: "Aggregating listings from all major rental platforms",
+    href: "",
+    cta: "",
+    className: "col-span-3 lg:col-span-1",
+    background: (
+      <div className="absolute inset-0">
+        <AnimatedBeamDemo />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
+      </div>
+    ),
+  },
+  {
+    Icon: Target,
+    name: "Stay Ahead of the Competition",
+    description: "Act fast on new listings before anyone else",
+    href: "",
+    cta: "",
+    className: "col-span-3 lg:col-span-1",
+    background: (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-muted/40 via-muted/20 to-background p-8">
+        <div className="flex flex-col items-center gap-2">
+          <NumberTicker
+            value={966000}
+            className="text-5xl font-bold tracking-tight text-foreground"
+          />
+          <p className="text-xs font-medium text-muted-foreground">
+            rent stabilized units
+          </p>
+        </div>
+        <p className="text-center text-sm text-muted-foreground/80 max-w-[240px] leading-relaxed">
+          Gone in hours. Notified in seconds.
+        </p>
+      </div>
+    ),
+  },
+];
+
 export function LiveFeed() {
   return (
     <section className="bg-muted/50 px-8 py-24 sm:px-12 lg:px-16 xl:px-24">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Left side - Text content */}
-          <div className="flex flex-col justify-center">
-            <h2 className="mb-6 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-              Instant text alerts for new listings
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Get notified the moment a rental matches your criteria. Act fast, stay ahead.
-            </p>
-          </div>
-
-          {/* Right side - Animated list */}
-          <div className="flex items-center justify-center">
-            <div className="relative flex h-[600px] w-full max-w-[450px] flex-col overflow-hidden rounded-lg border bg-background p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
-                <h3 className="text-lg font-semibold">Live Listings</h3>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-                  <span className="text-xs text-muted-foreground">Live</span>
-                </div>
-              </div>
-              <AnimatedList delay={2000}>
-                {notifications.map((item, idx) => (
-                  <RentalNotificationCard {...item} key={idx} />
-                ))}
-              </AnimatedList>
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background to-transparent" />
-            </div>
-          </div>
+        <div className="mb-12 text-center">
+          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+            Our Features
+          </h2>
         </div>
+
+        <BentoGrid>
+          {features.map((feature, idx) => (
+            <BentoCard key={idx} {...feature} />
+          ))}
+        </BentoGrid>
       </div>
     </section>
   );

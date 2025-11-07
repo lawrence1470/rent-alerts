@@ -24,18 +24,8 @@ export function CTA() {
             className="min-w-[200px] bg-background text-foreground hover:bg-background/90"
           >
             <Link href="/sign-up">
-              Get Started Free
+              Stay Ahead of the Competition
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            asChild
-            className="min-w-[200px] border-primary-foreground/20 bg-transparent text-primary-foreground hover:bg-primary-foreground/10"
-          >
-            <Link href="/dashboard">
-              View Demo
             </Link>
           </Button>
         </div>

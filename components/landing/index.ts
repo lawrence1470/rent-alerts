@@ -2,6 +2,8 @@ export { Navbar } from "./navbar";
 export { Hero } from "./hero";
 export { Features } from "./features";
 export { LiveFeed } from "./live-feed";
+export { TextRevealSection } from "./text-reveal-section";
+export { RentStabilizationFeature } from "./rent-stabilization-feature";
 export { Stats } from "./stats";
 export { CTA } from "./cta";
 export { Footer } from "./footer";
