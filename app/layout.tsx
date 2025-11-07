@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider, SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,12 +24,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        cssLayerName: 'clerk' // Required for Tailwind 4 compatibility
+      }}
+    >
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <header className="flex justify-end items-center p-4 gap-4 h-16 border-b border-border">
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+          </header>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
