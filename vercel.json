@@ -4,5 +4,6 @@
       "path": "/api/cron/check-alerts",
       "schedule": "0/15 * * * *"
     }
-  ]
+  ],
+  "buildCommand": "npm run build && npm run test -- --run"
 }
