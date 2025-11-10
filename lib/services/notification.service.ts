@@ -7,11 +7,14 @@
 import { db } from '../db';
 import { notifications, type Alert, type Listing, type Notification } from '../schema';
 import { eq, and } from 'drizzle-orm';
+import { sendSMS, formatRentalNotificationSMS, isSMSEnabled } from './sms.service';
+import { sendEmail, formatRentalNotificationEmail, isEmailEnabled } from './email.service';
+import { clerkClient } from '@clerk/nextjs/server';
 
 // ============================================================================
 // TYPES
 // ============================================================================
-export type NotificationChannel = 'email' | 'in_app' | 'push';
+export type NotificationChannel = 'email' | 'in_app' | 'push' | 'sms';
 
 export interface NotificationData {
   userId: string;
@@ -20,6 +23,10 @@ export interface NotificationData {
   channel: NotificationChannel;
   subject?: string;
   body?: string;
+  phoneNumber?: string; // For SMS notifications
+  twilioMessageSid?: string; // Twilio message identifier
+  emailAddress?: string; // For email notifications
+  resendMessageId?: string; // Resend message identifier
 }
 
 // ============================================================================
@@ -37,6 +44,10 @@ export async function createNotification(data: NotificationData): Promise<Notifi
     channel: data.channel,
     subject: data.subject,
     body: data.body,
+    phoneNumber: data.phoneNumber,
+    twilioMessageSid: data.twilioMessageSid,
+    emailAddress: data.emailAddress,
+    resendMessageId: data.resendMessageId,
     status: 'pending',
   }).returning();
 
@@ -63,14 +74,71 @@ export async function generateNotificationsForAlert(
 ): Promise<Notification[]> {
   if (newListings.length === 0) return [];
 
-  const notificationsData: NotificationData[] = newListings.map(listing => ({
-    userId: alert.userId,
-    alertId: alert.id,
-    listingId: listing.id,
-    channel,
-    subject: generateNotificationSubject(alert, listing),
-    body: generateNotificationBody(alert, listing),
-  }));
+  // Get user contact info based on channel
+  let phoneNumber: string | undefined;
+  let emailAddress: string | undefined;
+
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(alert.userId);
+
+    // Get phone number if SMS channel
+    if (channel === 'sms') {
+      const phoneNumbers = user.phoneNumbers || [];
+      if (phoneNumbers.length > 0) {
+        phoneNumber = phoneNumbers[0].phoneNumber;
+      }
+    }
+
+    // Get email address if email channel
+    if (channel === 'email') {
+      const emails = user.emailAddresses || [];
+      if (emails.length > 0) {
+        emailAddress = emails[0].emailAddress;
+      }
+    }
+  } catch (error) {
+    console.error(`Error fetching user contact info for ${channel}:`, error);
+  }
+
+  const notificationsData: NotificationData[] = newListings.map(listing => {
+    const baseData: NotificationData = {
+      userId: alert.userId,
+      alertId: alert.id,
+      listingId: listing.id,
+      channel,
+    };
+
+    // Use different formatting based on channel
+    if (channel === 'sms') {
+      return {
+        ...baseData,
+        body: formatRentalNotificationSMS({
+          address: listing.address,
+          price: listing.price,
+          bedrooms: listing.bedrooms,
+          bathrooms: listing.bathrooms,
+          url: listing.listingUrl,
+          neighborhood: listing.neighborhood,
+        }),
+        phoneNumber,
+      };
+    } else if (channel === 'email') {
+      const { subject } = formatRentalNotificationEmail(listing, alert);
+      return {
+        ...baseData,
+        subject,
+        body: `Email notification for ${listing.address}`, // Store plain text for reference
+        emailAddress,
+      };
+    } else {
+      return {
+        ...baseData,
+        subject: generateNotificationSubject(alert, listing),
+        body: generateNotificationBody(alert, listing),
+      };
+    }
+  });
 
   return createBulkNotifications(notificationsData);
 }
@@ -130,27 +198,144 @@ export async function getPendingNotifications(
 
 /**
  * Processes pending email notifications
- * This would integrate with your email service (SendGrid, Resend, etc.)
+ * Integrates with Resend email service
  */
 export async function processEmailNotifications(): Promise<{
   sent: number;
   failed: number;
 }> {
+  // Check if email is enabled
+  if (!isEmailEnabled()) {
+    console.warn('Email not enabled - Resend not configured');
+    return { sent: 0, failed: 0 };
+  }
+
   const pending = await getPendingNotifications('email', 50);
   let sent = 0;
   let failed = 0;
 
   for (const notification of pending) {
     try {
-      // TODO: Integrate with email service
-      // await sendEmail({
-      //   to: getUserEmail(notification.userId),
-      //   subject: notification.subject,
-      //   body: notification.body,
-      // });
+      // Fetch related listing and alert for email formatting
+      const { listings: listingsTable, alerts: alertsTable } = await import('../schema');
 
-      await markNotificationSent(notification.id);
-      sent++;
+      const listing = await db.query.listings.findFirst({
+        where: eq(listingsTable.id, notification.listingId),
+      });
+
+      const alert = await db.query.alerts.findFirst({
+        where: eq(alertsTable.id, notification.alertId),
+      });
+
+      if (!listing || !alert) {
+        throw new Error('Listing or alert not found');
+      }
+
+      // Get user email if not already stored
+      let emailAddress = notification.body?.match(/[^\s@]+@[^\s@]+\.[^\s@]+/)?.[0];
+
+      if (!emailAddress) {
+        try {
+          const client = await clerkClient();
+          const user = await client.users.getUser(notification.userId);
+          const emails = user.emailAddresses || [];
+          if (emails.length > 0) {
+            emailAddress = emails[0].emailAddress;
+          }
+        } catch (error) {
+          console.error('Error fetching user email:', error);
+        }
+      }
+
+      if (!emailAddress) {
+        throw new Error('No email address available for user');
+      }
+
+      // Format and send email
+      const { subject, html } = formatRentalNotificationEmail(listing, alert);
+      const result = await sendEmail({
+        to: emailAddress,
+        subject,
+        html,
+      });
+
+      if (result.success) {
+        // Update notification with Resend message ID
+        await db.update(notifications)
+          .set({
+            status: 'sent',
+            sentAt: new Date(),
+            resendMessageId: result.messageId,
+            emailAddress,
+          })
+          .where(eq(notifications.id, notification.id));
+
+        sent++;
+      } else {
+        throw new Error(result.error || 'Failed to send email');
+      }
+    } catch (error) {
+      await markNotificationFailed(
+        notification.id,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+      failed++;
+    }
+  }
+
+  return { sent, failed };
+}
+
+/**
+ * Processes pending SMS notifications
+ * Integrates with Twilio SMS service
+ */
+export async function processSMSNotifications(): Promise<{
+  sent: number;
+  failed: number;
+}> {
+  // Check if SMS is enabled
+  if (!isSMSEnabled()) {
+    console.warn('SMS not enabled - Twilio not configured');
+    return { sent: 0, failed: 0 };
+  }
+
+  const pending = await getPendingNotifications('sms', 50);
+  let sent = 0;
+  let failed = 0;
+
+  for (const notification of pending) {
+    try {
+      // Ensure phone number exists
+      if (!notification.phoneNumber) {
+        throw new Error('No phone number provided for SMS notification');
+      }
+
+      // Ensure body exists
+      if (!notification.body) {
+        throw new Error('No message body provided for SMS notification');
+      }
+
+      // Send SMS via Twilio
+      const result = await sendSMS({
+        to: notification.phoneNumber,
+        body: notification.body,
+      });
+
+      if (result.success) {
+        // Update notification with Twilio message SID
+        await db.update(notifications)
+          .set({
+            status: 'sent',
+            sentAt: new Date(),
+            twilioMessageSid: result.messageSid,
+          })
+          .where(eq(notifications.id, notification.id));
+
+        sent++;
+      } else {
+        throw new Error(result.error || 'Failed to send SMS');
+      }
     } catch (error) {
       await markNotificationFailed(
         notification.id,
@@ -238,14 +423,37 @@ function generateNotificationBodyHtml(alert: Alert, listing: Listing): string {
 // ============================================================================
 
 /**
- * Gets user's notification channel preferences
- * For now, returns default channels
- * TODO: Implement user preferences table
+ * Gets user's notification channel preferences based on alert settings
+ * Checks alert preferences for enablePhoneNotifications and enableEmailNotifications
  */
-export function getUserNotificationChannels(userId: string): NotificationChannel[] {
-  // Default to in-app notifications
-  // Later can be customized per user
-  return ['in_app'];
+export async function getUserNotificationChannels(
+  alert: Alert
+): Promise<NotificationChannel[]> {
+  const channels: NotificationChannel[] = ['in_app']; // Always include in-app
+
+  // Add email if enabled
+  if (alert.enableEmailNotifications) {
+    channels.push('email');
+  }
+
+  // Add SMS if enabled and user has phone number
+  if (alert.enablePhoneNotifications) {
+    try {
+      // Check if user has phone number in Clerk
+      const client = await clerkClient();
+      const user = await client.users.getUser(alert.userId);
+      const phoneNumbers = user.phoneNumbers || [];
+
+      if (phoneNumbers.length > 0 && phoneNumbers[0].phoneNumber) {
+        channels.push('sms');
+      }
+    } catch (error) {
+      console.error('Error fetching user phone number:', error);
+      // Skip SMS if we can't fetch phone number
+    }
+  }
+
+  return channels;
 }
 
 /**

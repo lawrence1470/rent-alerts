@@ -30,6 +30,13 @@ export const alerts = pgTable('alerts', {
   noFee: boolean('no_fee').default(false),
   filterRentStabilized: boolean('filter_rent_stabilized').default(false),
 
+  // Notification Preferences
+  enablePhoneNotifications: boolean('enable_phone_notifications').default(true).notNull(),
+  enableEmailNotifications: boolean('enable_email_notifications').default(true).notNull(),
+
+  // Frequency Preference (which paid tier to use for this alert)
+  preferredFrequency: text('preferred_frequency').default('1hour').notNull(), // '15min', '30min', '1hour', 'free'
+
   // Alert Status
   isActive: boolean('is_active').default(true).notNull(),
 
@@ -185,8 +192,8 @@ export const notifications = pgTable('notifications', {
   alertId: uuid('alert_id').notNull().references(() => alerts.id, { onDelete: 'cascade' }),
   listingId: uuid('listing_id').notNull().references(() => listings.id, { onDelete: 'cascade' }),
 
-  // Notification Channel
-  channel: text('channel', { enum: ['email', 'in_app', 'push'] }).notNull().default('in_app'),
+  // Notification Channel - UPDATED to include 'sms'
+  channel: text('channel', { enum: ['email', 'in_app', 'push', 'sms'] }).notNull().default('in_app'),
 
   // Status
   status: text('status', { enum: ['pending', 'sent', 'failed'] }).notNull().default('pending'),
@@ -194,6 +201,14 @@ export const notifications = pgTable('notifications', {
   // Message (pre-generated for efficiency)
   subject: text('subject'),
   body: text('body'),
+
+  // SMS specific fields
+  phoneNumber: text('phone_number'), // E.164 format phone number for SMS
+  twilioMessageSid: text('twilio_message_sid'), // Twilio message identifier
+
+  // Email specific fields
+  emailAddress: text('email_address'), // Email address for email notifications
+  resendMessageId: text('resend_message_id'), // Resend message identifier
 
   // Error tracking
   errorMessage: text('error_message'),
@@ -350,3 +365,129 @@ export type NewCronJobLog = typeof cronJobLogs.$inferInsert;
 
 export type BuildingCache = typeof buildingCache.$inferSelect;
 export type NewBuildingCache = typeof buildingCache.$inferInsert;
+
+// ============================================================================
+// PAYMENT TIERS TABLE
+// ============================================================================
+// Defines the available notification frequency tiers and their pricing
+export const paymentTiers = pgTable('payment_tiers', {
+  id: text('id').primaryKey(), // '15min', '30min', '1hour'
+  name: text('name').notNull(), // 'Premium (15-minute checks)', etc.
+  checkInterval: text('check_interval').notNull(), // '15 minutes', '30 minutes', '1 hour'
+  pricePerWeek: integer('price_per_week').notNull(), // Price in cents (e.g., 2000 = $20.00)
+  checksPerDay: integer('checks_per_day').notNull(), // Number of checks per day
+  stripePriceId: text('stripe_price_id'), // Stripe Price ID for this tier
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  isActiveIdx: index('payment_tiers_is_active_idx').on(table.isActive),
+}));
+
+// ============================================================================
+// USER ACCESS PERIODS TABLE
+// ============================================================================
+// Tracks time-based access periods for each tier
+export const userAccessPeriods = pgTable('user_access_periods', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull(), // Clerk user ID
+  tierId: text('tier_id').notNull().references(() => paymentTiers.id),
+
+  // Access Period
+  startsAt: timestamp('starts_at').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+
+  // Status
+  status: text('status', { enum: ['active', 'expired', 'refunded'] }).default('active').notNull(),
+
+  // Timestamps
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('user_access_periods_user_id_idx').on(table.userId),
+  tierIdIdx: index('user_access_periods_tier_id_idx').on(table.tierId),
+  statusIdx: index('user_access_periods_status_idx').on(table.status),
+  expiresAtIdx: index('user_access_periods_expires_at_idx').on(table.expiresAt),
+  // Composite index for efficient active period queries
+  activePeriodsIdx: index('user_access_periods_active_idx').on(
+    table.userId,
+    table.status,
+    table.expiresAt
+  ),
+}));
+
+// ============================================================================
+// PURCHASES TABLE
+// ============================================================================
+// Records of all payment transactions
+export const purchases = pgTable('purchases', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull(), // Clerk user ID
+  tierId: text('tier_id').notNull().references(() => paymentTiers.id),
+
+  // Stripe Data
+  stripePaymentIntentId: text('stripe_payment_intent_id').unique(),
+  stripeCheckoutSessionId: text('stripe_checkout_session_id').unique(),
+
+  // Purchase Details
+  weeksPurchased: integer('weeks_purchased').notNull(),
+  totalAmount: integer('total_amount').notNull(), // in cents
+
+  // Linked Access Period
+  accessPeriodId: uuid('access_period_id').references(() => userAccessPeriods.id),
+
+  // Status
+  status: text('status', { enum: ['pending', 'completed', 'failed', 'refunded'] }).default('pending').notNull(),
+
+  // Metadata
+  metadata: jsonb('metadata'), // Store additional Stripe metadata
+
+  // Timestamps
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+}, (table) => ({
+  userIdIdx: index('purchases_user_id_idx').on(table.userId),
+  tierIdIdx: index('purchases_tier_id_idx').on(table.tierId),
+  statusIdx: index('purchases_status_idx').on(table.status),
+  stripePaymentIntentIdx: uniqueIndex('purchases_stripe_payment_intent_idx').on(table.stripePaymentIntentId),
+  stripeCheckoutSessionIdx: uniqueIndex('purchases_stripe_checkout_session_idx').on(table.stripeCheckoutSessionId),
+}));
+
+// ============================================================================
+// PAYMENT RELATIONS
+// ============================================================================
+export const paymentTiersRelations = relations(paymentTiers, ({ many }) => ({
+  accessPeriods: many(userAccessPeriods),
+  purchases: many(purchases),
+}));
+
+export const userAccessPeriodsRelations = relations(userAccessPeriods, ({ one, many }) => ({
+  tier: one(paymentTiers, {
+    fields: [userAccessPeriods.tierId],
+    references: [paymentTiers.id],
+  }),
+  purchases: many(purchases),
+}));
+
+export const purchasesRelations = relations(purchases, ({ one }) => ({
+  tier: one(paymentTiers, {
+    fields: [purchases.tierId],
+    references: [paymentTiers.id],
+  }),
+  accessPeriod: one(userAccessPeriods, {
+    fields: [purchases.accessPeriodId],
+    references: [userAccessPeriods.id],
+  }),
+}));
+
+// ============================================================================
+// PAYMENT TYPE EXPORTS
+// ============================================================================
+export type PaymentTier = typeof paymentTiers.$inferSelect;
+export type NewPaymentTier = typeof paymentTiers.$inferInsert;
+
+export type UserAccessPeriod = typeof userAccessPeriods.$inferSelect;
+export type NewUserAccessPeriod = typeof userAccessPeriods.$inferInsert;
+
+export type Purchase = typeof purchases.$inferSelect;
+export type NewPurchase = typeof purchases.$inferInsert;

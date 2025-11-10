@@ -11,8 +11,37 @@ import { eq } from 'drizzle-orm';
 import { getActiveBatches, listingMatchesAlert } from './alert-batching.service';
 import { getStreetEasyClient } from './streeteasy-api.service';
 import { upsertListings, markListingsAsSeen } from './listing-deduplication.service';
-import { generateNotificationsForAlert, getUserNotificationChannels } from './notification.service';
+import { generateNotificationsForAlert, getUserNotificationChannels, processSMSNotifications, processEmailNotifications } from './notification.service';
 import { enrichListingsWithRentStabilization } from './rent-stabilization.service';
+import { hasActiveTierAccess, canUseTierForAlert } from './access-validation.service';
+import type { TierId } from '../stripe-config';
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Check if an alert should be checked based on its frequency and last check time
+ */
+function shouldCheckAlert(alert: any): boolean {
+  if (!alert.lastChecked) {
+    return true; // Never checked before
+  }
+
+  const lastChecked = new Date(alert.lastChecked);
+  const now = new Date();
+  const minutesSinceLastCheck = (now.getTime() - lastChecked.getTime()) / (1000 * 60);
+
+  // Get the frequency interval in minutes
+  const frequencyMinutes = {
+    '15min': 15,
+    '30min': 30,
+    '1hour': 60,
+  }[alert.preferredFrequency as TierId] || 60;
+
+  // Check if enough time has passed since last check
+  return minutesSinceLastCheck >= frequencyMinutes;
+}
 
 // ============================================================================
 // MAIN CRON JOB
@@ -72,6 +101,35 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
         for (const alert of allBatchAlerts) {
           if (!alert || !alert.isActive) continue;
 
+          // Check if this alert should be checked based on its frequency
+          if (!shouldCheckAlert(alert)) {
+            console.log(`Alert ${alert.name}: Skipping (not time yet for ${alert.preferredFrequency} checks)`);
+            continue;
+          }
+
+          // Check if user has access to use this tier
+          const preferredTier = alert.preferredFrequency as TierId;
+          const { canUse, reason } = await canUseTierForAlert(alert.userId, preferredTier);
+
+          if (!canUse) {
+            console.log(`Alert ${alert.name}: User lacks access to ${preferredTier} tier - ${reason}`);
+            // Fall back to free tier (1hour) if user doesn't have access
+            if (preferredTier !== '1hour') {
+              // Only check if it's time for hourly checks
+              const hourlyLastChecked = alert.lastChecked ? new Date(alert.lastChecked) : null;
+              const hoursSinceLastCheck = hourlyLastChecked
+                ? (Date.now() - hourlyLastChecked.getTime()) / (1000 * 60 * 60)
+                : 999;
+
+              if (hoursSinceLastCheck < 1) {
+                console.log(`Alert ${alert.name}: Falling back to free tier (1hour) - not time yet`);
+                continue;
+              }
+
+              console.log(`Alert ${alert.name}: Using free tier (1hour) fallback`);
+            }
+          }
+
           // Filter listings that match this specific alert's criteria
           const matchingListings = dbListings.filter(listing =>
             listingMatchesAlert(listing, alert)
@@ -88,8 +146,8 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
           console.log(`Alert ${alert.name}: ${newListings.length} new listings`);
           totalNewListings += newListings.length;
 
-          // Get user's notification preferences
-          const channels = getUserNotificationChannels(alert.userId);
+          // Get user's notification preferences based on alert settings
+          const channels = await getUserNotificationChannels(alert);
 
           // Create notifications for each channel
           for (const channel of channels) {
@@ -125,7 +183,29 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
       }
     }
 
-    // Step 6: Log successful completion
+    // Step 6: Process pending SMS notifications
+    let smsStats = { sent: 0, failed: 0 };
+    try {
+      console.log('Processing pending SMS notifications...');
+      smsStats = await processSMSNotifications();
+      console.log(`SMS notifications: ${smsStats.sent} sent, ${smsStats.failed} failed`);
+    } catch (error) {
+      console.error('Error processing SMS notifications:', error);
+      // Don't fail the entire cron job if SMS processing fails
+    }
+
+    // Step 7: Process pending email notifications
+    let emailStats = { sent: 0, failed: 0 };
+    try {
+      console.log('Processing pending email notifications...');
+      emailStats = await processEmailNotifications();
+      console.log(`Email notifications: ${emailStats.sent} sent, ${emailStats.failed} failed`);
+    } catch (error) {
+      console.error('Error processing email notifications:', error);
+      // Don't fail the entire cron job if email processing fails
+    }
+
+    // Step 8: Log successful completion
     const duration = Date.now() - startTime;
     await completeCronJobLog(logId, 'completed', {
       alertsProcessed: batches.reduce((sum, b) => sum + b.alertIds.length, 0),
@@ -141,6 +221,10 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
       batchesFetched: batches.length,
       newListingsFound: totalNewListings,
       notificationsCreated: totalNotifications,
+      smsSent: smsStats.sent,
+      smsFailed: smsStats.failed,
+      emailSent: emailStats.sent,
+      emailFailed: emailStats.failed,
       duration,
     };
 
@@ -164,6 +248,10 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
 export interface CronJobResult {
   success: boolean;
   alertsProcessed: number;
+  smsSent?: number;
+  smsFailed?: number;
+  emailSent?: number;
+  emailFailed?: number;
   batchesFetched: number;
   newListingsFound: number;
   notificationsCreated: number;
