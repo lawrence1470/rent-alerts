@@ -244,11 +244,10 @@ export function PricingCards() {
                       onClick={() => setSelectedWeeks(week)}
                       className={cn(
                         "relative py-2 text-sm font-medium rounded transition-all cursor-pointer",
-                        "hover:bg-accent hover:text-accent-foreground hover:scale-105",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         selectedWeeks === week
                           ? "bg-primary text-primary-foreground shadow-sm"
-                          : "bg-muted text-muted-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-primary/20 hover:border-primary/50 hover:text-foreground hover:scale-105 border border-transparent"
                       )}
                       aria-label={`${week} week${week > 1 ? 's' : ''}`}
                       aria-pressed={selectedWeeks === week}
