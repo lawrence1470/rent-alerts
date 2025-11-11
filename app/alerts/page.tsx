@@ -1,24 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
 import { Building2, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function AlertsPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
   return (
     <DashboardLayout>
+      {/* Upgrade Banner */}
+      <UpgradeBanner />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -29,40 +22,12 @@ export default function AlertsPage() {
             Get notified when new listings match your criteria
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Alert
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Alert</DialogTitle>
-              <DialogDescription>
-                Set up criteria for your rental search. We'll notify you when
-                new listings match.
-              </DialogDescription>
-            </DialogHeader>
-            {/* Form will go here */}
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Alert creation form coming soon...
-              </p>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={() => setIsDialogOpen(false)}>
-                Create Alert
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Link href="/alerts/create">
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Alert
+          </Button>
+        </Link>
       </div>
 
       {/* Empty State */}
@@ -101,14 +66,12 @@ export default function AlertsPage() {
           Create your first alert to start receiving notifications when new
           rental listings match your search criteria.
         </p>
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="gap-2"
-          size="lg"
-        >
-          <Plus className="h-4 w-4" />
-          Create Your First Alert
-        </Button>
+        <Link href="/alerts/create">
+          <Button size="lg" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Your First Alert
+          </Button>
+        </Link>
       </div>
     </DashboardLayout>
   );

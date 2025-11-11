@@ -1,0 +1,28 @@
+name: Check Alerts Cron Job
+
+on:
+  schedule:
+    # Runs every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+jobs:
+  check-alerts-production:
+    name: Check Alerts (Production)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call production cron endpoint
+        run: |
+          curl -X GET "https://rentnotify.com/api/cron/check-alerts" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || echo "Production cron failed"
+
+  check-alerts-preview:
+    name: Check Alerts (Preview)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call preview cron endpoint
+        run: |
+          curl -X GET "https://rent-alerts.vercel.app/api/cron/check-alerts" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || echo "Preview cron failed"

@@ -5,14 +5,15 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/logo";
 import {
   Home,
   Search,
   Bell,
   Settings,
-  Building2,
   User,
   X,
+  Plus,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -29,8 +30,8 @@ const navigationItems = [
     badge: null,
   },
   {
-    name: "My Searches",
-    href: "/dashboard/searches",
+    name: "My Alerts",
+    href: "/dashboard/alerts",
     icon: Search,
     badge: null,
   },
@@ -55,12 +56,7 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Building2 className="h-6 w-6 text-sidebar-primary" />
-          <span className="text-lg font-semibold text-sidebar-foreground">
-            RentNotify
-          </span>
-        </Link>
+        <Logo href="/dashboard" showText size="sm" />
         {isMobile && (
           <Button
             variant="ghost"
@@ -72,6 +68,20 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
             <X className="h-5 w-5" />
           </Button>
         )}
+      </div>
+
+      {/* Create Alert Button */}
+      <div className="border-b border-sidebar-border px-3 py-4">
+        <Button
+          asChild
+          className="w-full justify-start gap-2"
+          size="default"
+        >
+          <Link href="/dashboard/alerts/new" onClick={isMobile ? onClose : undefined}>
+            <Plus className="h-5 w-5" />
+            Create Alert
+          </Link>
+        </Button>
       </div>
 
       {/* Navigation */}
