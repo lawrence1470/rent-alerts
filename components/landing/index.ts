@@ -5,6 +5,7 @@ export { Features } from "./features";
 export { LiveFeed } from "./live-feed";
 export { TextRevealSection } from "./text-reveal-section";
 export { RentStabilizationFeature } from "./rent-stabilization-feature";
-export { Stats } from "./stats";
+export { Pricing } from "./pricing";
+export { FAQ } from "./faq";
 export { CTA } from "./cta";
 export { Footer } from "./footer";

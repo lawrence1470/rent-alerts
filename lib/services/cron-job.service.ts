@@ -24,14 +24,8 @@ import type { TierId } from '../stripe-config';
  * Check if an alert should be checked based on its frequency and last check time
  */
 function shouldCheckAlert(alert: any): boolean {
-  if (!alert.lastChecked) {
-    return true; // Never checked before
-  }
-
-  const lastChecked = new Date(alert.lastChecked);
   const now = new Date();
-  const minutesSinceLastCheck = (now.getTime() - lastChecked.getTime()) / (1000 * 60);
-
+  
   // Get the frequency interval in minutes
   const frequencyMinutes = {
     '15min': 15,
@@ -39,7 +33,28 @@ function shouldCheckAlert(alert: any): boolean {
     '1hour': 60,
   }[alert.preferredFrequency as TierId] || 60;
 
-  // Check if enough time has passed since last check
+  // Calculate if current time is a scheduled window for this frequency
+  // 15min: checks at :00, :15, :30, :45
+  // 30min: checks at :00, :30
+  // 1hour: checks at :00
+  const currentMinute = now.getMinutes();
+  const isScheduledWindow = currentMinute % frequencyMinutes === 0;
+
+  if (!isScheduledWindow) {
+    return false; // Not a scheduled check time for this frequency
+  }
+
+  // If alert has never been checked, check it now
+  if (!alert.lastChecked) {
+    return true;
+  }
+
+  // Check if we already checked in the current window
+  const lastChecked = new Date(alert.lastChecked);
+  const minutesSinceLastCheck = (now.getTime() - lastChecked.getTime()) / (1000 * 60);
+
+  // Only check if we haven't checked in the current window period
+  // This prevents double-checking if cron runs multiple times in the same minute
   return minutesSinceLastCheck >= frequencyMinutes;
 }
 
@@ -141,19 +156,32 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
           const { filterNewListings } = await import('./listing-deduplication.service');
           const newListings = await filterNewListings(alert.userId, alert.id, matchingListings);
 
-          if (newListings.length === 0) continue;
+          // Check if we should send notifications based on user preference
+          const shouldNotify = !alert.notifyOnlyNewApartments || newListings.length > 0;
 
-          console.log(`Alert ${alert.name}: ${newListings.length} new listings`);
+          if (!shouldNotify) {
+            console.log(`Alert ${alert.name}: No new listings, skipping notification (user preference)`);
+            continue;
+          }
+
+          if (newListings.length === 0) {
+            console.log(`Alert ${alert.name}: No new listings, but user wants all notifications`);
+          } else {
+            console.log(`Alert ${alert.name}: ${newListings.length} new listings`);
+          }
+
           totalNewListings += newListings.length;
 
           // Get user's notification preferences based on alert settings
           const channels = await getUserNotificationChannels(alert);
 
           // Create notifications for each channel
+          // Pass all matchingListings if user wants notifications even without new ones
+          const listingsToNotify = newListings.length > 0 ? newListings : matchingListings;
           for (const channel of channels) {
             const notifications = await generateNotificationsForAlert(
               alert,
-              newListings,
+              listingsToNotify,
               channel
             );
             totalNotifications += notifications.length;

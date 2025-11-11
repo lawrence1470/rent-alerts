@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { alerts } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
 import { rebuildAllBatches } from '@/lib/services/alert-batching.service';
+import { hasPremiumAccess } from '@/lib/services/access-validation.service';
 
 // ============================================================================
 // GET /api/alerts/[id] - Get specific alert
@@ -93,6 +94,17 @@ export async function PATCH(
 
     const body = await request.json();
 
+    // Validate premium-only features
+    if (body.filterRentStabilized !== undefined && body.filterRentStabilized) {
+      const isPremium = await hasPremiumAccess(userId);
+      if (!isPremium) {
+        return NextResponse.json(
+          { error: 'Rent stabilization filtering requires a premium subscription' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Update alert
     const [updatedAlert] = await db.update(alerts)
       .set({
@@ -104,6 +116,8 @@ export async function PATCH(
         maxBeds: body.maxBeds !== undefined ? body.maxBeds : existingAlert.maxBeds,
         minBaths: body.minBaths !== undefined ? body.minBaths : existingAlert.minBaths,
         noFee: body.noFee !== undefined ? body.noFee : existingAlert.noFee,
+        filterRentStabilized: body.filterRentStabilized !== undefined ? body.filterRentStabilized : existingAlert.filterRentStabilized,
+        notifyOnlyNewApartments: body.notifyOnlyNewApartments !== undefined ? body.notifyOnlyNewApartments : existingAlert.notifyOnlyNewApartments,
         isActive: body.isActive !== undefined ? body.isActive : existingAlert.isActive,
         updatedAt: new Date(),
       })

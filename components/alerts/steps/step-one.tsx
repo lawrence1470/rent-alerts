@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertFormData } from "../create-alert-wizard";
+import { AlertFormData } from "../types";
 
 type StepOneProps = {
   formData: AlertFormData;
@@ -33,14 +33,6 @@ export function StepOne({ formData, updateFormData }: StepOneProps) {
           Examples: "Williamsburg Studio", "UES 1BR No Fee", "Chelsea Under $3500"
         </p>
       </div>
-
-      {/* Preview section */}
-      {formData.name && (
-        <div className="mt-8 p-4 bg-muted/50 rounded-lg border">
-          <p className="text-sm font-medium mb-1">Preview:</p>
-          <p className="text-lg font-semibold text-foreground">{formData.name}</p>
-        </div>
-      )}
     </div>
   );
 }

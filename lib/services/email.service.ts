@@ -118,8 +118,12 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     // Get Resend client
     const resend = getResendClient();
 
-    // Default from address
-    const fromAddress = options.from || 'Rent Notifications <notifications@resend.dev>';
+    // Default from address (use env var or fallback to test domain)
+    const defaultFrom = process.env.RESEND_FROM_EMAIL
+      ? `Rent Notifications <${process.env.RESEND_FROM_EMAIL}>`
+      : 'Rent Notifications <onboarding@resend.dev>';
+
+    const fromAddress = options.from || defaultFrom;
 
     // Send email
     const response = await resend.emails.send({

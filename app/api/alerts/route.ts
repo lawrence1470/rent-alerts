@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { alerts } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
 import { rebuildAllBatches } from '@/lib/services/alert-batching.service';
+import { hasPremiumAccess } from '@/lib/services/access-validation.service';
 
 // ============================================================================
 // GET /api/alerts - List user's alerts
@@ -67,6 +68,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate price range logic
+    if (body.minPrice != null && body.maxPrice != null && body.minPrice > body.maxPrice) {
+      return NextResponse.json(
+        { error: 'Invalid price range: minimum price cannot exceed maximum price' },
+        { status: 400 }
+      );
+    }
+
+    // Validate bedroom range logic
+    if (body.minBeds != null && body.maxBeds != null && body.minBeds > body.maxBeds) {
+      return NextResponse.json(
+        { error: 'Invalid bedroom range: minimum bedrooms cannot exceed maximum bedrooms' },
+        { status: 400 }
+      );
+    }
+
+    // Validate premium-only features
+    if (body.filterRentStabilized) {
+      const isPremium = await hasPremiumAccess(userId);
+      if (!isPremium) {
+        return NextResponse.json(
+          { error: 'Rent stabilization filtering requires a premium subscription' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Create alert
     const [newAlert] = await db.insert(alerts).values({
       userId,
@@ -79,6 +107,7 @@ export async function POST(request: NextRequest) {
       minBaths: body.minBaths ?? null,
       noFee: body.noFee ?? false,
       filterRentStabilized: body.filterRentStabilized ?? false,
+      notifyOnlyNewApartments: body.notifyOnlyNewApartments ?? true,
       isActive: body.isActive ?? true,
     }).returning();
 

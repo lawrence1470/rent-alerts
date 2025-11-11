@@ -8,25 +8,27 @@ import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen overflow-hidden bg-gradient-to-b from-background via-background to-muted/20 px-8 sm:px-12 lg:px-16 xl:px-24 flex items-center">
+    <section className="relative min-h-screen overflow-hidden bg-gradient-to-b from-background via-background to-muted/20 px-8 sm:px-12 lg:px-16 xl:px-24 flex items-center" aria-label="Hero section">
       {/* Mobile Video Background - Only visible on mobile */}
-      <div className="absolute inset-0 z-0 lg:hidden">
+      <div className="absolute inset-0 z-0 lg:hidden" aria-hidden="true">
         <video
           className="w-full h-full object-cover"
           autoPlay
           muted
           loop
           playsInline
+          aria-label="NYC yellow taxi cab video background"
         >
           <source src="/nyc-yellow-cab.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
         </video>
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/75 to-background/80" />
       </div>
 
       {/* Background decoration */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" />
-      <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/10 blur-[100px]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]" aria-hidden="true" />
+      <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-primary/10 blur-[100px]" aria-hidden="true" />
 
       <div className="mx-auto max-w-7xl w-full py-12">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
@@ -84,7 +86,7 @@ export function Hero() {
           </div>
 
           {/* Right side - Video (Desktop only) */}
-          <div className="relative hidden lg:flex justify-end">
+          <div className="relative hidden lg:flex justify-end" aria-hidden="true">
             <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
               <video
                 className="w-full h-auto aspect-[9/16] object-cover"
@@ -92,6 +94,7 @@ export function Hero() {
                 muted
                 loop
                 playsInline
+                aria-label="NYC yellow taxi cab in Manhattan showcasing the city atmosphere"
               >
                 <source src="/nyc-yellow-cab.mp4" type="video/mp4" />
                 Your browser does not support the video tag.

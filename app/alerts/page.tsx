@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { Button } from "@/components/ui/button";
+import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
 import { Building2, Plus } from "lucide-react";
-import { CreateAlertWizard } from "@/components/alerts/create-alert-wizard";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function AlertsPage() {
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
-
   return (
     <DashboardLayout>
+      {/* Upgrade Banner */}
+      <UpgradeBanner />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -21,13 +22,13 @@ export default function AlertsPage() {
             Get notified when new listings match your criteria
           </p>
         </div>
-        <Button className="gap-2" onClick={() => setIsWizardOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Create Alert
-        </Button>
+        <Link href="/alerts/create">
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Alert
+          </Button>
+        </Link>
       </div>
-
-      <CreateAlertWizard open={isWizardOpen} onOpenChange={setIsWizardOpen} />
 
       {/* Empty State */}
       <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -65,14 +66,12 @@ export default function AlertsPage() {
           Create your first alert to start receiving notifications when new
           rental listings match your search criteria.
         </p>
-        <Button
-          onClick={() => setIsWizardOpen(true)}
-          className="gap-2"
-          size="lg"
-        >
-          <Plus className="h-4 w-4" />
-          Create Your First Alert
-        </Button>
+        <Link href="/alerts/create">
+          <Button size="lg" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Your First Alert
+          </Button>
+        </Link>
       </div>
     </DashboardLayout>
   );

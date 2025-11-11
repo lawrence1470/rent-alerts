@@ -19,56 +19,56 @@ interface RentalNotification {
 const notifications: RentalNotification[] = [
   {
     name: "2BR Apartment",
-    description: "$1,800/mo · Downtown",
+    description: "$3,400/mo · Williamsburg, Brooklyn",
     time: "2m ago",
     icon: "🏢",
     color: "#00C9A7",
   },
   {
     name: "Studio Loft",
-    description: "$1,200/mo · Arts District",
+    description: "$2,200/mo · Chelsea, Manhattan",
     time: "5m ago",
     icon: "🏠",
     color: "#FFB800",
   },
   {
-    name: "3BR House",
-    description: "$2,500/mo · Suburbs",
+    name: "3BR Apartment",
+    description: "$5,800/mo · Upper East Side, Manhattan",
     time: "12m ago",
     icon: "🏡",
     color: "#FF3D71",
   },
   {
-    name: "1BR Condo",
-    description: "$1,500/mo · Midtown",
+    name: "1BR Apartment",
+    description: "$2,800/mo · East Village, Manhattan",
     time: "18m ago",
     icon: "🏘️",
     color: "#1E86FF",
   },
   {
-    name: "2BR Townhouse",
-    description: "$2,100/mo · West End",
+    name: "2BR Duplex",
+    description: "$4,200/mo · Park Slope, Brooklyn",
     time: "25m ago",
     icon: "🏚️",
     color: "#9F7AEA",
   },
   {
-    name: "Studio Apartment",
-    description: "$1,000/mo · University District",
+    name: "Studio",
+    description: "$1,950/mo · Hell's Kitchen, Manhattan",
     time: "32m ago",
     icon: "🏢",
     color: "#F56565",
   },
   {
-    name: "4BR House",
-    description: "$3,200/mo · Lake View",
+    name: "4BR Townhouse",
+    description: "$6,500/mo · DUMBO, Brooklyn",
     time: "45m ago",
     icon: "🏡",
     color: "#48BB78",
   },
   {
     name: "2BR Loft",
-    description: "$1,900/mo · Historic District",
+    description: "$3,900/mo · SoHo, Manhattan",
     time: "1h ago",
     icon: "🏠",
     color: "#ED8936",
@@ -197,9 +197,9 @@ const features = [
     icon: <Zap className="h-4 w-4 text-neutral-500" />,
     title: "Instant SMS Alerts",
     description: "Get notified the moment a rental matches your criteria",
-    className: "md:col-span-2",
+    className: "md:row-span-2",
     header: (
-      <div className="flex flex-1 w-full h-full min-h-[12rem] max-h-[20rem] items-center justify-center">
+      <div className="flex flex-1 w-full h-full min-h-[12rem] items-center justify-center">
         <div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border bg-background/50 backdrop-blur-sm p-4">
           <div className="mb-3 flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-sm font-semibold">Live Listings</h3>
@@ -287,13 +287,16 @@ const features = [
 
 export function LiveFeed() {
   return (
-    <section className="bg-muted/50 px-8 py-24 sm:px-12 lg:px-16 xl:px-24">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-12 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
-            Our Features
+    <section className="bg-muted/50 px-8 py-16 sm:px-12 lg:px-16 xl:px-24 min-h-screen flex items-center" aria-labelledby="features-heading">
+      <div className="mx-auto max-w-7xl w-full py-8">
+        <header className="mb-8 text-center">
+          <h2 id="features-heading" className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+            Features That Help You Find NYC Apartments Faster
           </h2>
-        </div>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Real-time alerts, rent stabilization detection, and instant notifications for Manhattan, Brooklyn, and Queens rentals
+          </p>
+        </header>
 
         <BentoGrid>
           {features.map((feature, idx) => (

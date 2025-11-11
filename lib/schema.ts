@@ -12,6 +12,28 @@ import { pgTable, text, timestamp, integer, boolean, uuid, uniqueIndex, index, j
 import { relations } from 'drizzle-orm';
 
 // ============================================================================
+// USERS TABLE
+// ============================================================================
+// Synced from Clerk via webhooks to avoid repeated API calls
+export const users = pgTable('users', {
+  id: text('id').primaryKey(), // Clerk user ID
+  email: text('email').notNull(),
+  phoneNumber: text('phone_number'), // Optional, from Clerk
+  firstName: text('first_name'),
+  lastName: text('last_name'),
+  imageUrl: text('image_url'),
+
+  // Timestamps
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  emailIdx: index('users_email_idx').on(table.email),
+}));
+
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
+// ============================================================================
 // USER ALERTS TABLE
 // ============================================================================
 // Stores user search criteria for rental notifications
@@ -33,6 +55,7 @@ export const alerts = pgTable('alerts', {
   // Notification Preferences
   enablePhoneNotifications: boolean('enable_phone_notifications').default(true).notNull(),
   enableEmailNotifications: boolean('enable_email_notifications').default(true).notNull(),
+  notifyOnlyNewApartments: boolean('notify_only_new_apartments').default(true).notNull(), // Only send notifications when new apartments are found
 
   // Frequency Preference (which paid tier to use for this alert)
   preferredFrequency: text('preferred_frequency').default('1hour').notNull(), // '15min', '30min', '1hour', 'free'
@@ -294,7 +317,16 @@ export const buildingCache = pgTable('building_cache', {
 // ============================================================================
 // DRIZZLE RELATIONS
 // ============================================================================
-export const alertsRelations = relations(alerts, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  alerts: many(alerts),
+  notifications: many(notifications),
+}));
+
+export const alertsRelations = relations(alerts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [alerts.userId],
+    references: [users.id],
+  }),
   batchMemberships: many(alertBatchMemberships),
   seenListings: many(userSeenListings),
   notifications: many(notifications),
@@ -332,6 +364,10 @@ export const userSeenListingsRelations = relations(userSeenListings, ({ one }) =
 }));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
   alert: one(alerts, {
     fields: [notifications.alertId],
     references: [alerts.id],

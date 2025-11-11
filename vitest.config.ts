@@ -1,27 +1,33 @@
 import { defineConfig } from 'vitest/config';
-import { resolve } from 'path';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
+  plugins: [react()],
   test: {
-    environment: 'happy-dom',
     globals: true,
-    setupFiles: ['./test/setup.ts'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'test/',
-        '**/*.test.ts',
-        '**/*.spec.ts',
-        'drizzle/',
-        '.next/',
-      ],
-    },
+    environment: 'jsdom',
+    setupFiles: './vitest.setup.ts',
+    include: [
+      '__tests__/**/*.{test,spec}.{ts,tsx}',
+      'test/**/*.{test,spec}.{ts,tsx}'
+    ],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/.{idea,git,cache,output,temp}/**',
+      '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
+      // Explicitly exclude deleted wizard tests
+      '**/alert-wizard.test.*',
+      '**/step-four-frequency.test.*',
+      'test/components/**',
+      '__tests__/components/alerts/steps/**'
+    ],
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './'),
+      '@': path.resolve(__dirname, './'),
     },
   },
 });

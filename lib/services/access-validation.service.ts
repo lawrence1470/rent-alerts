@@ -125,6 +125,15 @@ export async function getAllActivePeriodsForUser(userId: string) {
 }
 
 /**
+ * Check if a user has any premium (paid) tier access
+ */
+export async function hasPremiumAccess(userId: string): Promise<boolean> {
+  const activeTiers = await getUserActiveTiers(userId);
+  // Check if user has any tier other than free (1hour)
+  return activeTiers.some(tier => tier !== '1hour');
+}
+
+/**
  * Validate that a user can use a specific tier for an alert
  */
 export async function canUseTierForAlert(

@@ -8,6 +8,20 @@
       "when": 1762542654816,
       "tag": "0000_dear_typhoid_mary",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762560614594,
+      "tag": "0001_short_the_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762636769140,
+      "tag": "0002_volatile_christian_walker",
+      "breakpoints": true
     }
   ]
 }

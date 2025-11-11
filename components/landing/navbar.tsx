@@ -11,9 +11,9 @@ export function Navbar() {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-2">
-          <ShinyButton asChild>
-            <Link href="/sign-in">Sign In</Link>
-          </ShinyButton>
+          <Link href="/sign-in">
+            <ShinyButton>Sign In</ShinyButton>
+          </Link>
         </div>
       </div>
     </nav>

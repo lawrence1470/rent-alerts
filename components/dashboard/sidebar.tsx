@@ -13,6 +13,7 @@ import {
   Settings,
   User,
   X,
+  Plus,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -29,8 +30,8 @@ const navigationItems = [
     badge: null,
   },
   {
-    name: "My Searches",
-    href: "/dashboard/searches",
+    name: "My Alerts",
+    href: "/dashboard/alerts",
     icon: Search,
     badge: null,
   },
@@ -67,6 +68,20 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
             <X className="h-5 w-5" />
           </Button>
         )}
+      </div>
+
+      {/* Create Alert Button */}
+      <div className="border-b border-sidebar-border px-3 py-4">
+        <Button
+          asChild
+          className="w-full justify-start gap-2"
+          size="default"
+        >
+          <Link href="/dashboard/alerts/new" onClick={isMobile ? onClose : undefined}>
+            <Plus className="h-5 w-5" />
+            Create Alert
+          </Link>
+        </Button>
       </div>
 
       {/* Navigation */}

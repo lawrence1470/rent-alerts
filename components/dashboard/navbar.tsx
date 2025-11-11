@@ -15,6 +15,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import { SubscriptionBadges } from "./subscription-badges";
 
 const navItems = [
   {
@@ -28,8 +29,8 @@ const navItems = [
     icon: Bell,
   },
   {
-    title: "Settings",
-    href: "/settings",
+    title: "Subscriptions",
+    href: "/subscriptions",
     icon: Settings,
   },
 ];
@@ -60,7 +61,8 @@ export function Navbar() {
         </NavigationMenu>
 
         {/* Auth Section - Right */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
+          <SubscriptionBadges />
           <SignedOut>
             <SignInButton mode="modal">
               <Button variant="ghost" size="sm">

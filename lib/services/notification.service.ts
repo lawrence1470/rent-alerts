@@ -9,7 +9,6 @@ import { notifications, type Alert, type Listing, type Notification } from '../s
 import { eq, and } from 'drizzle-orm';
 import { sendSMS, formatRentalNotificationSMS, isSMSEnabled } from './sms.service';
 import { sendEmail, formatRentalNotificationEmail, isEmailEnabled } from './email.service';
-import { clerkClient } from '@clerk/nextjs/server';
 
 // ============================================================================
 // TYPES
@@ -74,31 +73,26 @@ export async function generateNotificationsForAlert(
 ): Promise<Notification[]> {
   if (newListings.length === 0) return [];
 
-  // Get user contact info based on channel
+  // Get user contact info from local database instead of Clerk API
   let phoneNumber: string | undefined;
   let emailAddress: string | undefined;
 
   try {
-    const client = await clerkClient();
-    const user = await client.users.getUser(alert.userId);
+    const user = await db.query.users.findFirst({
+      where: (users, { eq }) => eq(users.id, alert.userId),
+    });
 
-    // Get phone number if SMS channel
-    if (channel === 'sms') {
-      const phoneNumbers = user.phoneNumbers || [];
-      if (phoneNumbers.length > 0) {
-        phoneNumber = phoneNumbers[0].phoneNumber;
-      }
+    if (!user) {
+      console.error(`User not found in database: ${alert.userId}`);
+      // Fallback: user might not be synced yet, skip for now
+      return [];
     }
 
-    // Get email address if email channel
-    if (channel === 'email') {
-      const emails = user.emailAddresses || [];
-      if (emails.length > 0) {
-        emailAddress = emails[0].emailAddress;
-      }
-    }
+    phoneNumber = user.phoneNumber || undefined;
+    emailAddress = user.email;
   } catch (error) {
-    console.error(`Error fetching user contact info for ${channel}:`, error);
+    console.error(`Error fetching user from database for ${channel}:`, error);
+    return [];
   }
 
   const notificationsData: NotificationData[] = newListings.map(listing => {
@@ -231,25 +225,16 @@ export async function processEmailNotifications(): Promise<{
         throw new Error('Listing or alert not found');
       }
 
-      // Get user email if not already stored
-      let emailAddress = notification.body?.match(/[^\s@]+@[^\s@]+\.[^\s@]+/)?.[0];
+      // Get user email from local database instead of Clerk API
+      const user = await db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, notification.userId),
+      });
 
-      if (!emailAddress) {
-        try {
-          const client = await clerkClient();
-          const user = await client.users.getUser(notification.userId);
-          const emails = user.emailAddresses || [];
-          if (emails.length > 0) {
-            emailAddress = emails[0].emailAddress;
-          }
-        } catch (error) {
-          console.error('Error fetching user email:', error);
-        }
+      if (!user || !user.email) {
+        throw new Error('User or email not found in database');
       }
 
-      if (!emailAddress) {
-        throw new Error('No email address available for user');
-      }
+      const emailAddress = user.email;
 
       // Format and send email
       const { subject, html } = formatRentalNotificationEmail(listing, alert);
@@ -439,16 +424,16 @@ export async function getUserNotificationChannels(
   // Add SMS if enabled and user has phone number
   if (alert.enablePhoneNotifications) {
     try {
-      // Check if user has phone number in Clerk
-      const client = await clerkClient();
-      const user = await client.users.getUser(alert.userId);
-      const phoneNumbers = user.phoneNumbers || [];
+      // Check if user has phone number in local database
+      const user = await db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, alert.userId),
+      });
 
-      if (phoneNumbers.length > 0 && phoneNumbers[0].phoneNumber) {
+      if (user && user.phoneNumber) {
         channels.push('sms');
       }
     } catch (error) {
-      console.error('Error fetching user phone number:', error);
+      console.error('Error fetching user phone number from database:', error);
       // Skip SMS if we can't fetch phone number
     }
   }

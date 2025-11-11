@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/logo";
 import { Menu } from "lucide-react";
 
 interface MobileNavProps {
@@ -22,7 +23,7 @@ export function MobileNav({ onMenuClick }: MobileNavProps) {
         <Menu className="h-6 w-6" />
       </Button>
 
-      <h1 className="text-lg font-semibold text-foreground">Dashboard</h1>
+      <Logo href="/dashboard" showText size="sm" />
 
       {/* Placeholder for future actions (notifications, profile, etc.) */}
       <div className="w-10" />
