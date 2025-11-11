@@ -171,18 +171,14 @@ export function PricingCards() {
         throw new Error(error.error || 'Failed to create checkout session');
       }
 
-      const { sessionId } = await response.json();
+      const { url } = await response.json();
 
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Failed to load Stripe');
+      if (!url) {
+        throw new Error('No checkout URL returned');
       }
 
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-
-      if (error) {
-        throw error;
-      }
+      // Redirect to Stripe Checkout
+      window.location.href = url;
     } catch (error) {
       console.error('Purchase error:', error);
       toast.error('Purchase failed', {

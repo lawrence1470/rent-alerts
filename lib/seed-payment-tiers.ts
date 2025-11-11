@@ -25,6 +25,15 @@ const TIERS = [
     isActive: true,
   },
   {
+    id: '1hour-sms',
+    name: 'Hourly Checks + SMS',
+    checkInterval: '1 hour',
+    pricePerWeek: 500, // $5.00/week in cents
+    checksPerDay: 24,
+    stripePriceId: null, // Will be set when Stripe product is created
+    isActive: true,
+  },
+  {
     id: '30min',
     name: '30-Minute Checks',
     checkInterval: '30 minutes',
