@@ -22,7 +22,7 @@ type StepFourProps = {
 };
 
 type FrequencyOption = {
-  value: '15min' | '30min' | '1hour';
+  value: '15min' | '30min' | '1hour' | '1hour-sms';
   label: string;
   description: string;
   pricePerWeek: number;
@@ -40,6 +40,15 @@ const FREQUENCY_OPTIONS: FrequencyOption[] = [
     checksPerDay: 24,
     icon: <Clock className="h-5 w-5" />,
     requiresPayment: false,
+  },
+  {
+    value: '1hour-sms',
+    label: 'Hourly Checks + SMS',
+    description: 'Check every hour with SMS notifications',
+    pricePerWeek: 5,
+    checksPerDay: 24,
+    icon: <Bell className="h-5 w-5" />,
+    requiresPayment: true,
   },
   {
     value: '30min',
@@ -72,6 +81,7 @@ export function StepFour({
   const [hasActiveAccess, setHasActiveAccess] = useState<Record<string, boolean>>({
     '15min': false,
     '30min': false,
+    '1hour-sms': false,
     '1hour': true,
   });
 
@@ -83,6 +93,7 @@ export function StepFour({
           setHasActiveAccess({
             '15min': data.activeTiers?.includes('15min') || false,
             '30min': data.activeTiers?.includes('30min') || false,
+            '1hour-sms': data.activeTiers?.includes('1hour-sms') || false,
             '1hour': true,
           });
         })
@@ -90,6 +101,7 @@ export function StepFour({
           setHasActiveAccess({
             '15min': false,
             '30min': false,
+            '1hour-sms': false,
             '1hour': true,
           });
         });
@@ -129,7 +141,7 @@ export function StepFour({
     updateFormData({ enablePhoneNotifications: checked });
   };
 
-  const handleFrequencyChange = (frequency: '15min' | '30min' | '1hour') => {
+  const handleFrequencyChange = (frequency: '15min' | '30min' | '1hour' | '1hour-sms') => {
     updateFormData({ preferredFrequency: frequency });
   };
 
@@ -137,24 +149,24 @@ export function StepFour({
     <div className="space-y-8 py-4">
       {/* Notification Frequency Section */}
       <div>
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Notification Frequency</h3>
-            <p className="text-sm text-muted-foreground">
-              Choose how often you'd like us to check for new listings.
-            </p>
+        <div className="mb-6">
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <h3 className="text-lg font-semibold">Notification Frequency</h3>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="flex-shrink-0"
+            >
+              <Link href="/subscriptions" target="_blank" className="flex items-center gap-1.5">
+                View Pricing
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
           </div>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="flex-shrink-0"
-          >
-            <Link href="/subscriptions" target="_blank" className="flex items-center gap-1.5">
-              View Pricing
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          <p className="text-sm text-muted-foreground">
+            Choose how often you'd like us to check for new listings. Upgrade anytime for faster checks and SMS notifications.
+          </p>
         </div>
 
         {/* Frequency Options */}
@@ -211,23 +223,27 @@ export function StepFour({
                           )}
                         </div>
 
-                        <p className="text-muted-foreground mb-1">
+                        <p className="text-muted-foreground">
                           {option.description}
                         </p>
 
-                        <p className="text-xs text-muted-foreground">
-                          Up to {option.checksPerDay} checks per day
-                        </p>
-
-                        {option.value === '1hour' && (
-                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                            Email notifications only
-                          </p>
-                        )}
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>Up to {option.checksPerDay} checks/day</span>
+                          {option.value === '1hour' && (
+                            <span className="text-blue-600 dark:text-blue-400">
+                              • Email only
+                            </span>
+                          )}
+                          {(option.value === '1hour-sms' || option.value === '30min' || option.value === '15min') && (
+                            <span className="text-green-600 dark:text-green-400">
+                              • Email + SMS
+                            </span>
+                          )}
+                        </div>
 
                         {isLocked && (
-                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                            Purchase {option.label.toLowerCase()} access to use this frequency
+                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium">
+                            Subscribe to unlock this tier
                           </p>
                         )}
                       </div>

@@ -7,7 +7,7 @@ export type AlertFormData = {
   minBaths: number | null;
   noFee: boolean;
   filterRentStabilized: boolean;
-  preferredFrequency: '15min' | '30min' | '1hour';
+  preferredFrequency: '15min' | '30min' | '1hour' | '1hour-sms';
   enablePhoneNotifications: boolean;
   enableEmailNotifications: boolean;
   notifyOnlyNewApartments?: boolean;

@@ -67,7 +67,7 @@ export default function AlertsPage() {
           rental listings match your search criteria.
         </p>
         <Link href="/alerts/create">
-          <Button size="lg" className="gap-2">
+          <Button size="lg" className="gap-2 cursor-pointer hover:scale-105 transition-all">
             <Plus className="h-4 w-4" />
             Create Your First Alert
           </Button>
