@@ -224,7 +224,7 @@ export default function CreateAlertPage() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-card border rounded-lg p-6 mb-6 min-h-[400px]">
+        <div className="bg-card border rounded-lg p-6 mb-6 min-h-[300px]">
           {step === 1 && (
             <StepOne formData={formData} updateFormData={updateFormData} />
           )}
