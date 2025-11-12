@@ -10,4 +10,5 @@ export type AlertFormData = {
   preferredFrequency: '15min' | '30min' | '1hour';
   enablePhoneNotifications: boolean;
   enableEmailNotifications: boolean;
+  notifyOnlyNewApartments?: boolean;
 };

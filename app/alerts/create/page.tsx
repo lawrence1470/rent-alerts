@@ -6,8 +6,8 @@ import { StatefulButton, useStatefulButton } from "@/components/ui/stateful-butt
 import { StepOne } from "@/components/alerts/steps/step-one";
 import { StepTwo } from "@/components/alerts/steps/step-two";
 import { StepThree } from "@/components/alerts/steps/step-three";
-import { StepFourFrequency } from "@/components/alerts/steps/step-four-frequency";
-import { StepFive } from "@/components/alerts/steps/step-five";
+import { StepFour } from "@/components/alerts/steps/step-four";
+import { StepSix } from "@/components/alerts/steps/step-six";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AlertCircle, ArrowLeft, LogIn } from "lucide-react";
@@ -37,6 +37,7 @@ export default function CreateAlertPage() {
     preferredFrequency: "1hour",
     enablePhoneNotifications: true,
     enableEmailNotifications: true,
+    notifyOnlyNewApartments: true,
   });
 
   const totalSteps = 5;
@@ -174,8 +175,7 @@ export default function CreateAlertPage() {
     if (step === 1) return formData.name.trim().length > 0;
     if (step === 2) return formData.areas.length > 0;
     if (step === 3) return true;
-    if (step === 4) return true;
-    if (step === 5) {
+    if (step === 4) {
       const hasNotificationMethod = formData.enablePhoneNotifications || formData.enableEmailNotifications;
       if (!hasNotificationMethod) return false;
 
@@ -187,6 +187,7 @@ export default function CreateAlertPage() {
 
       return true;
     }
+    if (step === 5) return true;
     return true;
   };
 
@@ -236,16 +237,16 @@ export default function CreateAlertPage() {
             <StepThree formData={formData} updateFormData={updateFormData} />
           )}
           {step === 4 && (
-            <StepFourFrequency formData={formData} updateFormData={updateFormData} />
-          )}
-          {step === 5 && (
-            <StepFive
+            <StepFour
               formData={formData}
               updateFormData={updateFormData}
               userHasPhone={!needsPhone}
               phoneNumber={phoneNumber}
               onPhoneChange={setPhoneNumber}
             />
+          )}
+          {step === 5 && (
+            <StepSix formData={formData} updateFormData={updateFormData} />
           )}
         </div>
       </div>

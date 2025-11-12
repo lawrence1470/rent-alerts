@@ -2,11 +2,16 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { AlertFormData } from "../types";
-import { Bell, Mail, Phone, AlertCircle } from "lucide-react";
+import { Clock, Zap, Timer, Lock, Bell, Mail, Phone, AlertCircle, ExternalLink } from "lucide-react";
 import { Checkbox } from "@headlessui/react";
 import { CheckCircleIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useState, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import Link from "next/link";
 
 type StepFourProps = {
   formData: AlertFormData;
@@ -16,6 +21,46 @@ type StepFourProps = {
   onPhoneChange: (phone: string) => void;
 };
 
+type FrequencyOption = {
+  value: '15min' | '30min' | '1hour';
+  label: string;
+  description: string;
+  pricePerWeek: number;
+  checksPerDay: number;
+  icon: React.ReactNode;
+  requiresPayment: boolean;
+};
+
+const FREQUENCY_OPTIONS: FrequencyOption[] = [
+  {
+    value: '1hour',
+    label: 'Hourly Checks',
+    description: 'Check for new listings every hour',
+    pricePerWeek: 0,
+    checksPerDay: 24,
+    icon: <Clock className="h-5 w-5" />,
+    requiresPayment: false,
+  },
+  {
+    value: '30min',
+    label: '30-Minute Checks',
+    description: 'Check for new listings every 30 minutes',
+    pricePerWeek: 15,
+    checksPerDay: 48,
+    icon: <Timer className="h-5 w-5" />,
+    requiresPayment: true,
+  },
+  {
+    value: '15min',
+    label: '15-Minute Checks',
+    description: 'Check for new listings every 15 minutes',
+    pricePerWeek: 20,
+    checksPerDay: 96,
+    icon: <Zap className="h-5 w-5" />,
+    requiresPayment: true,
+  },
+];
+
 export function StepFour({
   formData,
   updateFormData,
@@ -23,6 +68,33 @@ export function StepFour({
   phoneNumber,
   onPhoneChange
 }: StepFourProps) {
+  const { user } = useUser();
+  const [hasActiveAccess, setHasActiveAccess] = useState<Record<string, boolean>>({
+    '15min': false,
+    '30min': false,
+    '1hour': true,
+  });
+
+  useEffect(() => {
+    if (user) {
+      fetch('/api/user/access')
+        .then(res => res.json())
+        .then(data => {
+          setHasActiveAccess({
+            '15min': data.activeTiers?.includes('15min') || false,
+            '30min': data.activeTiers?.includes('30min') || false,
+            '1hour': true,
+          });
+        })
+        .catch(() => {
+          setHasActiveAccess({
+            '15min': false,
+            '30min': false,
+            '1hour': true,
+          });
+        });
+    }
+  }, [user]);
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digits
     const cleaned = value.replace(/\D/g, "");
@@ -49,39 +121,146 @@ export function StepFour({
   // Check if at least one notification method is enabled
   const hasNoNotificationMethod = !formData.enableEmailNotifications && !formData.enablePhoneNotifications;
 
-  const toggleEmailNotifications = () => {
-    updateFormData({ enableEmailNotifications: !formData.enableEmailNotifications });
+  const toggleEmailNotifications = (checked: boolean) => {
+    updateFormData({ enableEmailNotifications: checked });
   };
 
-  const togglePhoneNotifications = () => {
-    updateFormData({ enablePhoneNotifications: !formData.enablePhoneNotifications });
+  const togglePhoneNotifications = (checked: boolean) => {
+    updateFormData({ enablePhoneNotifications: checked });
+  };
+
+  const handleFrequencyChange = (frequency: '15min' | '30min' | '1hour') => {
+    updateFormData({ preferredFrequency: frequency });
   };
 
   return (
     <div className="space-y-8 py-4">
+      {/* Notification Frequency Section */}
       <div>
-        <h3 className="text-lg font-semibold mb-2">Notification Preferences</h3>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Notification Frequency</h3>
+            <p className="text-sm text-muted-foreground">
+              Choose how often you'd like us to check for new listings.
+            </p>
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="flex-shrink-0"
+          >
+            <Link href="/subscriptions" target="_blank" className="flex items-center gap-1.5">
+              View Pricing
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          </Button>
+        </div>
+
+        {/* Frequency Options */}
+        <div className="space-y-3 mb-8">
+          {FREQUENCY_OPTIONS.map((option) => {
+            const isSelected = formData.preferredFrequency === option.value;
+            const hasAccess = hasActiveAccess[option.value];
+            const isLocked = option.requiresPayment && !hasAccess;
+
+            return (
+              <div key={option.value} className="relative">
+                <Checkbox
+                  checked={isSelected}
+                  onChange={() => {
+                    if (!isLocked) {
+                      handleFrequencyChange(option.value);
+                    }
+                  }}
+                  disabled={isLocked}
+                  className={`
+                    group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition
+                    focus:outline-none
+                    data-checked:border-primary data-checked:bg-primary/5
+                    ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}
+                  `}
+                >
+                  <div className="flex w-full items-center justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className={`
+                        mt-0.5
+                        ${isSelected ? 'text-primary' : 'text-muted-foreground'}
+                        ${isLocked ? 'text-muted-foreground/50' : ''}
+                      `}>
+                        {option.icon}
+                      </div>
+
+                      <div className="text-sm flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-foreground">
+                            {option.label}
+                          </p>
+                          {isLocked && (
+                            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                          {option.pricePerWeek > 0 && (
+                            <span className="text-xs font-medium text-primary">
+                              ${option.pricePerWeek}/week
+                            </span>
+                          )}
+                          {option.pricePerWeek === 0 && (
+                            <span className="text-xs font-medium text-green-600 dark:text-green-400">
+                              Free
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-muted-foreground mb-1">
+                          {option.description}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                          Up to {option.checksPerDay} checks per day
+                        </p>
+
+                        {option.value === '1hour' && (
+                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            Email notifications only
+                          </p>
+                        )}
+
+                        {isLocked && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                            Purchase {option.label.toLowerCase()} access to use this frequency
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {!isLocked && (
+                      <CheckCircleIcon
+                        className={`
+                          h-6 w-6 text-primary flex-shrink-0 transition
+                          ${isSelected ? 'opacity-100' : 'opacity-0'}
+                        `}
+                      />
+                    )}
+                  </div>
+                </Checkbox>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Notification Methods Section */}
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Notification Methods</h3>
         <p className="text-sm text-muted-foreground mb-6">
           Choose how you'd like to be notified about new listings.
         </p>
-      </div>
 
-      {/* Notification Methods */}
-      <div className="space-y-4">
-        <h4 className="font-medium flex items-center gap-2">
-          <Bell className="h-4 w-4" />
-          Notification Methods
-        </h4>
-
-        {/* Email Notifications */}
-        <Checkbox
-          checked={formData.enableEmailNotifications}
-          onChange={toggleEmailNotifications}
-          className="group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition focus:outline-none data-checked:border-primary data-checked:bg-primary/5"
-        >
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-muted-foreground group-data-checked:text-primary mt-0.5" />
+        <div className="space-y-4">
+          {/* Email Notifications */}
+          <div className="flex items-center justify-between rounded-lg border bg-card px-5 py-4 shadow-sm">
+            <div className="flex items-start gap-3 flex-1">
+              <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="text-sm">
                 <p className="font-semibold text-foreground">Email Notifications</p>
                 <p className="text-muted-foreground">
@@ -89,19 +268,17 @@ export function StepFour({
                 </p>
               </div>
             </div>
-            <CheckCircleIcon className="h-6 w-6 text-primary opacity-0 transition group-data-checked:opacity-100 flex-shrink-0" />
+            <Switch
+              checked={formData.enableEmailNotifications}
+              onCheckedChange={toggleEmailNotifications}
+              className="flex-shrink-0 ml-4"
+            />
           </div>
-        </Checkbox>
 
-        {/* Phone Notifications */}
-        <Checkbox
-          checked={formData.enablePhoneNotifications}
-          onChange={togglePhoneNotifications}
-          className="group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition focus:outline-none data-checked:border-primary data-checked:bg-primary/5"
-        >
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-start gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground group-data-checked:text-primary mt-0.5" />
+          {/* Phone Notifications */}
+          <div className="flex items-center justify-between rounded-lg border bg-card px-5 py-4 shadow-sm">
+            <div className="flex items-start gap-3 flex-1">
+              <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="text-sm">
                 <p className="font-semibold text-foreground">SMS Notifications</p>
                 <p className="text-muted-foreground">
@@ -109,19 +286,23 @@ export function StepFour({
                 </p>
               </div>
             </div>
-            <CheckCircleIcon className="h-6 w-6 text-primary opacity-0 transition group-data-checked:opacity-100 flex-shrink-0" />
+            <Switch
+              checked={formData.enablePhoneNotifications}
+              onCheckedChange={togglePhoneNotifications}
+              className="flex-shrink-0 ml-4"
+            />
           </div>
-        </Checkbox>
 
-        {/* Warning - only show if no method is selected */}
-        {hasNoNotificationMethod && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              At least one notification method must be enabled
-            </p>
-          </div>
-        )}
+          {/* Warning - only show if no method is selected */}
+          {hasNoNotificationMethod && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                At least one notification method must be enabled
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Conditional Phone Number Collection */}

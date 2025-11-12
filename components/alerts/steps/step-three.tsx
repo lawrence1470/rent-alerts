@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -141,49 +141,6 @@ export function StepThree({ formData, updateFormData }: StepThreeProps) {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-        </div>
-
-        {/* Additional Options */}
-        <div className="space-y-3 p-4 rounded-lg border bg-card">
-          <h4 className="font-medium">Additional Options</h4>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="rent-stabilized"
-              checked={formData.filterRentStabilized}
-              onCheckedChange={(checked) =>
-                updateFormData({ filterRentStabilized: checked as boolean })
-              }
-            />
-            <Label
-              htmlFor="rent-stabilized"
-              className="text-sm cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Check if rent stabilized
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Learn more about rent stabilization check"
-                >
-                  <Info className="h-4 w-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="start">
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">
-                    How Rent Stabilization Check Works
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    We&apos;ll estimate rent stabilization status based on NYC
-                    building data. Results show probability percentages to help
-                    you make informed decisions.
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
           </div>
         </div>
       </div>
