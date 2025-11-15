@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Zap, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 interface AccessPeriod {
   tierId: string;
@@ -49,10 +51,22 @@ export function SubscriptionBadges() {
           <span className="text-xs font-medium">Premium</span>
         </Badge>
       ) : (
-        <Badge variant="outline" className="flex items-center gap-1.5 px-2 md:px-3 py-1">
-          <Clock className="h-3 w-3 opacity-60" />
-          <span className="text-xs text-muted-foreground">Free Tier</span>
-        </Badge>
+        <>
+          <Badge variant="outline" className="flex items-center gap-1.5 px-2 md:px-3 py-1">
+            <Clock className="h-3 w-3 opacity-60" />
+            <span className="text-xs text-muted-foreground">Free Tier</span>
+          </Badge>
+          <Button
+            asChild
+            size="sm"
+            className="h-8 px-3 gap-1.5 text-xs font-medium"
+          >
+            <Link href="/subscriptions">
+              Upgrade Now
+              <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </Button>
+        </>
       )}
     </div>
   );
