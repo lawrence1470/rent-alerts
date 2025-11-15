@@ -62,7 +62,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ subscriptions });
+    // Also return a simple array of active tier IDs for easy checking
+    const activeTiers = subscriptions.map(sub => sub.tierId);
+
+    return NextResponse.json({
+      subscriptions,
+      activeTiers
+    });
 
   } catch (error) {
     console.error('Error fetching user access:', error);
