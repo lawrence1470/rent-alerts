@@ -75,6 +75,14 @@ export async function POST(request: Request) {
     // Create Stripe checkout session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
+    console.log('🛒 Creating checkout session:', {
+      userId,
+      tierId,
+      weeks,
+      totalAmount: (totalAmount / 100).toFixed(2),
+      tierName: tierConfig.name,
+    });
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -91,7 +99,7 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'payment',
-      success_url: `${appUrl}/dashboard?payment=success`,
+      success_url: `${appUrl}/subscriptions?payment=success`,
       cancel_url: `${appUrl}/pricing?payment=cancelled`,
       metadata: {
         userId,
@@ -106,6 +114,12 @@ export async function POST(request: Request) {
       .update(purchases)
       .set({ stripeCheckoutSessionId: session.id })
       .where(eq(purchases.id, purchase.id));
+
+    console.log('✅ Checkout session created successfully:', {
+      sessionId: session.id,
+      purchaseId: purchase.id,
+      checkoutUrl: session.url,
+    });
 
     return NextResponse.json({
       sessionId: session.id,
