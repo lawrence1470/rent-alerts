@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Logo } from "@/components/logo";
+import { useState, useEffect } from "react";
 import {
   Home,
   Search,
@@ -14,6 +15,7 @@ import {
   User,
   X,
   Plus,
+  CreditCard,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -28,29 +30,69 @@ const navigationItems = [
     href: "/dashboard",
     icon: Home,
     badge: null,
+    badgeType: null,
   },
   {
     name: "My Alerts",
     href: "/dashboard/alerts",
     icon: Search,
     badge: null,
+    badgeType: null,
   },
   {
     name: "Notifications",
     href: "/dashboard/notifications",
     icon: Bell,
     badge: 3,
+    badgeType: "count",
+  },
+  {
+    name: "Subscriptions",
+    href: "/subscriptions",
+    icon: CreditCard,
+    badge: null,
+    badgeType: "upgrade",
   },
   {
     name: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
     badge: null,
+    badgeType: null,
   },
 ];
 
+interface AccessPeriod {
+  tierId: string;
+  tierName: string;
+  expiresAt: string;
+  status: string;
+}
+
 export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
+  const [hasPremium, setHasPremium] = useState<boolean>(true);
+
+  useEffect(() => {
+    checkPremiumStatus();
+  }, []);
+
+  async function checkPremiumStatus() {
+    try {
+      const response = await fetch('/api/user/access');
+      if (response.ok) {
+        const data = await response.json();
+        const accessPeriods: AccessPeriod[] = data.accessPeriods || [];
+        const hasPaid = accessPeriods.some(period => period.tierId !== '1hour');
+        setHasPremium(hasPaid);
+      } else {
+        setHasPremium(false);
+      }
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      setHasPremium(false);
+    }
+  }
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
@@ -89,6 +131,8 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
         {navigationItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
+          const showUpgradeBadge = item.badgeType === "upgrade" && !hasPremium;
+          const showCountBadge = item.badgeType === "count" && item.badge !== null && item.badge > 0;
 
           return (
             <Link
@@ -107,7 +151,15 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
             >
               <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
               <span className="flex-1">{item.name}</span>
-              {item.badge !== null && item.badge > 0 && (
+              {showUpgradeBadge && (
+                <Badge
+                  variant="default"
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-2 py-0.5"
+                >
+                  Upgrade
+                </Badge>
+              )}
+              {showCountBadge && (
                 <Badge
                   variant="secondary"
                   className="h-5 min-w-5 px-1.5 text-xs"

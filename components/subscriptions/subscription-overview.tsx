@@ -50,6 +50,14 @@ export function SubscriptionOverview() {
     }
   }
 
+  function calculateDaysRemaining(expiresAt: string): number {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+
   if (loading) {
     return (
       <div className="mb-12">

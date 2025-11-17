@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Link from "next/link";
 
 const faqs = [
   {
@@ -31,54 +30,50 @@ const faqs = [
   },
 ];
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="border-b border-border">
-      <button
-        className="flex w-full items-center justify-between py-6 text-left transition-colors hover:text-primary"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="text-lg font-semibold pr-8">{question}</span>
-        <ChevronDown
-          className={cn(
-            "h-5 w-5 shrink-0 transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
-        />
-      </button>
-      <div
-        className={cn(
-          "grid transition-all duration-200 ease-in-out",
-          isOpen ? "grid-rows-[1fr] pb-6" : "grid-rows-[0fr]"
-        )}
-      >
-        <div className="overflow-hidden">
-          <p className="text-muted-foreground leading-relaxed">{answer}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function FAQ() {
   return (
-    <section className="bg-background px-8 py-24 sm:px-12 lg:px-16 xl:px-24">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-12 text-center">
-          <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+    <section className="py-16 md:py-24">
+      <div className="mx-auto max-w-5xl px-4 md:px-6">
+        <div className="mx-auto max-w-xl text-center">
+          <h2 className="text-balance text-3xl font-bold md:text-4xl lg:text-5xl">
             Frequently Asked Questions
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            Everything you need to know about finding your perfect NYC apartment
+          <p className="text-muted-foreground mt-4 text-balance">
+            Everything you need to know about our rental notification service
           </p>
         </div>
 
-        <div className="space-y-0">
-          {faqs.map((faq, idx) => (
-            <FAQItem key={idx} question={faq.question} answer={faq.answer} />
-          ))}
+        <div className="mx-auto mt-12 max-w-xl">
+          <Accordion
+            type="single"
+            collapsible
+            className="bg-card ring-muted w-full rounded-2xl border px-8 py-3 shadow-sm ring-4 dark:ring-0"
+          >
+            {faqs.map((faq, idx) => (
+              <AccordionItem
+                key={`item-${idx + 1}`}
+                value={`item-${idx + 1}`}
+                className="border-dashed"
+              >
+                <AccordionTrigger className="cursor-pointer text-base hover:no-underline">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-base">{faq.answer}</p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+
+          <p className="text-muted-foreground mt-6 px-8">
+            Can't find what you're looking for? Contact our{" "}
+            <Link
+              href="mailto:support@example.com"
+              className="text-primary font-medium hover:underline"
+            >
+              customer support team
+            </Link>
+          </p>
         </div>
       </div>
     </section>

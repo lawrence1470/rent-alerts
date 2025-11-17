@@ -42,7 +42,7 @@ const TESTIMONIALS = [
 ];
 
 type Tier = {
-  id: '1hour' | '1hour-sms' | '30min' | '15min';
+  id: '1hour-sms' | '30min' | '15min';
   name: string;
   description: string;
   pricePerWeek: number;
@@ -203,8 +203,6 @@ export function PricingCards() {
 
   const getGradient = (tierId: string) => {
     switch (tierId) {
-      case '1hour':
-        return 'bg-gradient-to-r from-slate-200 to-slate-300';
       case '1hour-sms':
         return 'bg-gradient-to-r from-green-200 to-emerald-300';
       case '30min':

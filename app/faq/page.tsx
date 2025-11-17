@@ -4,15 +4,13 @@
  * Frequently Asked Questions with accordion layout
  */
 
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { ArrowLeft, HelpCircle, Shield, CreditCard, Bell, Clock, RefreshCw, Zap } from 'lucide-react';
+"use client";
 
-export const metadata = {
-  title: 'FAQ - Rental Notifications',
-  description: 'Frequently asked questions about our rental notification service',
-};
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft, HelpCircle, Shield, CreditCard, Bell, Zap, Sparkles } from 'lucide-react';
 
 const FAQ_CATEGORIES = [
   {
@@ -125,31 +123,33 @@ export default function FAQPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-muted/30">
-        <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <div className="container mx-auto px-4 py-6 max-w-5xl">
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all cursor-pointer hover:translate-x-[-4px] mb-6"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-all cursor-pointer hover:-translate-x-1 mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Pricing
           </Link>
 
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <HelpCircle className="h-8 w-8 text-primary" />
+          <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 shrink-0">
+              <HelpCircle className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-4xl font-bold tracking-tight mb-3">
-              Frequently Asked Questions
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to know about our rental notification service
-            </p>
+            <div className="flex flex-col items-start gap-1">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                Frequently Asked Questions
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Everything you need to know about our rental notification service
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* FAQ Content */}
-      <div className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="space-y-12">
           {FAQ_CATEGORIES.map((category) => {
             const Icon = category.icon;
@@ -163,20 +163,29 @@ export default function FAQPage() {
                   <h2 className="text-2xl font-bold">{category.category}</h2>
                 </div>
 
-                {/* Questions */}
-                <div className="space-y-4">
+                {/* Accordion */}
+                <Accordion
+                  type="single"
+                  collapsible
+                  className="bg-card w-full rounded-2xl border px-6 py-2 shadow-sm ring-4 ring-muted dark:ring-0"
+                >
                   {category.questions.map((faq, idx) => (
-                    <Card key={idx} className="p-6 hover:shadow-lg hover:border-primary/30 transition-all">
-                      <h3 className="font-semibold text-lg mb-3 flex items-start gap-2">
-                        <span className="text-primary mt-1">Q:</span>
+                    <AccordionItem
+                      key={`${category.category}-${idx}`}
+                      value={`${category.category}-${idx}`}
+                      className="border-dashed"
+                    >
+                      <AccordionTrigger className="cursor-pointer text-base hover:no-underline text-left">
                         {faq.question}
-                      </h3>
-                      <p className="text-muted-foreground leading-relaxed pl-6">
-                        {faq.answer}
-                      </p>
-                    </Card>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <p className="text-base text-muted-foreground leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               </div>
             );
           })}

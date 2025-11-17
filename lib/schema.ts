@@ -280,6 +280,42 @@ export const cronJobLogs = pgTable('cron_job_logs', {
 }));
 
 // ============================================================================
+// ALERT RUNS TABLE
+// ============================================================================
+// Tracks every execution of each alert for historical analysis and metrics
+export const alertRuns = pgTable('alert_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  alertId: uuid('alert_id').notNull().references(() => alerts.id, { onDelete: 'cascade' }),
+  batchId: uuid('batch_id').references(() => alertBatches.id, { onDelete: 'set null' }),
+
+  // Execution timing
+  executedAt: timestamp('executed_at').defaultNow().notNull(),
+  executionTimeMs: integer('execution_time_ms'),
+
+  // Apartment metrics - tracks what happened during this run
+  totalListingsFromBatch: integer('total_listings_from_batch').notNull().default(0), // All listings from API
+  matchingListings: integer('matching_listings').notNull().default(0), // After criteria filtering
+  newListings: integer('new_listings').notNull().default(0), // User hadn't seen before
+  duplicateListings: integer('duplicate_listings').notNull().default(0), // Already seen by user
+
+  // Notification metrics
+  notificationsSent: integer('notifications_sent').notNull().default(0),
+
+  // Status tracking
+  status: text('status', { enum: ['success', 'skipped', 'failed'] }).notNull(),
+  skipReason: text('skip_reason'), // e.g., "inactive", "no_tier_access", "too_soon"
+  errorMessage: text('error_message'),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  alertIdIdx: index('alert_runs_alert_id_idx').on(table.alertId),
+  executedAtIdx: index('alert_runs_executed_at_idx').on(table.executedAt),
+  statusIdx: index('alert_runs_status_idx').on(table.status),
+  // Composite index for efficient time-series queries
+  alertExecutedIdx: index('alert_runs_alert_executed_idx').on(table.alertId, table.executedAt),
+}));
+
+// ============================================================================
 // BUILDING CACHE TABLE
 // ============================================================================
 // Cache building-level rent stabilization data to minimize API calls
@@ -330,6 +366,18 @@ export const alertsRelations = relations(alerts, ({ one, many }) => ({
   batchMemberships: many(alertBatchMemberships),
   seenListings: many(userSeenListings),
   notifications: many(notifications),
+  runs: many(alertRuns),
+}));
+
+export const alertRunsRelations = relations(alertRuns, ({ one }) => ({
+  alert: one(alerts, {
+    fields: [alertRuns.alertId],
+    references: [alerts.id],
+  }),
+  batch: one(alertBatches, {
+    fields: [alertRuns.batchId],
+    references: [alertBatches.id],
+  }),
 }));
 
 export const alertBatchesRelations = relations(alertBatches, ({ many }) => ({
@@ -398,6 +446,9 @@ export type NewNotification = typeof notifications.$inferInsert;
 
 export type CronJobLog = typeof cronJobLogs.$inferSelect;
 export type NewCronJobLog = typeof cronJobLogs.$inferInsert;
+
+export type AlertRun = typeof alertRuns.$inferSelect;
+export type NewAlertRun = typeof alertRuns.$inferInsert;
 
 export type BuildingCache = typeof buildingCache.$inferSelect;
 export type NewBuildingCache = typeof buildingCache.$inferInsert;
@@ -527,3 +578,126 @@ export type NewUserAccessPeriod = typeof userAccessPeriods.$inferInsert;
 
 export type Purchase = typeof purchases.$inferSelect;
 export type NewPurchase = typeof purchases.$inferInsert;
+
+// ============================================================================
+// AUDIT LOGS TABLE
+// ============================================================================
+// Comprehensive error and event tracking for system reliability and debugging
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  // Event Classification
+  level: text('level', { enum: ['debug', 'info', 'warn', 'error', 'critical'] }).notNull().default('info'),
+  category: text('category', {
+    enum: [
+      'api_route',        // API endpoint errors
+      'external_api',     // StreetEasy, Resend, Twilio failures
+      'database',         // DB operation failures
+      'webhook',          // Clerk/Stripe webhook processing
+      'cron_job',         // Cron execution errors (detailed version of cron_job_logs)
+      'notification',     // Email/SMS delivery issues
+      'authentication',   // Auth failures
+      'validation',       // Input validation errors
+      'system'            // General system events
+    ]
+  }).notNull(),
+
+  // Event Context
+  source: text('source').notNull(), // e.g., "POST /api/alerts", "StreetEasyAPI", "checkAllAlerts"
+  message: text('message').notNull(), // Human-readable error message
+
+  // User Context (optional, null for system events)
+  userId: text('user_id'), // Clerk user ID
+  sessionId: text('session_id'), // Session identifier if available
+
+  // Request Context (for API routes)
+  method: text('method'), // HTTP method: GET, POST, PATCH, DELETE
+  path: text('path'), // API route path
+  statusCode: integer('status_code'), // HTTP status code
+  ipAddress: text('ip_address'), // Client IP (anonymized for privacy)
+  userAgent: text('user_agent'), // Client user agent
+
+  // Error Details
+  errorType: text('error_type'), // Error class name (e.g., "ValidationError", "APIError")
+  errorMessage: text('error_message'), // Original error message
+  stackTrace: text('stack_trace'), // Full stack trace
+
+  // Contextual Data
+  metadata: jsonb('metadata'), // Flexible JSON for request/response data, params, etc.
+
+  // Related Records (for correlation)
+  alertId: uuid('alert_id').references(() => alerts.id, { onDelete: 'set null' }),
+  listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'set null' }),
+  notificationId: uuid('notification_id').references(() => notifications.id, { onDelete: 'set null' }),
+  batchId: uuid('batch_id').references(() => alertBatches.id, { onDelete: 'set null' }),
+  cronJobLogId: uuid('cron_job_log_id').references(() => cronJobLogs.id, { onDelete: 'set null' }),
+
+  // Timing & Resolution
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+  duration: integer('duration'), // Operation duration in milliseconds
+  resolved: boolean('resolved').default(false), // For tracking error resolution
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: text('resolved_by'), // User who resolved the issue
+
+  // Data Retention
+  expiresAt: timestamp('expires_at'), // Auto-delete after retention period
+}, (table) => ({
+  // Performance indexes
+  timestampIdx: index('audit_logs_timestamp_idx').on(table.timestamp),
+  levelIdx: index('audit_logs_level_idx').on(table.level),
+  categoryIdx: index('audit_logs_category_idx').on(table.category),
+  userIdIdx: index('audit_logs_user_id_idx').on(table.userId),
+
+  // Composite indexes for common queries
+  errorQueryIdx: index('audit_logs_error_query_idx').on(
+    table.level,
+    table.category,
+    table.timestamp
+  ),
+  userErrorsIdx: index('audit_logs_user_errors_idx').on(
+    table.userId,
+    table.level,
+    table.timestamp
+  ),
+  sourceIdx: index('audit_logs_source_idx').on(table.source),
+  statusCodeIdx: index('audit_logs_status_code_idx').on(table.statusCode),
+
+  // Retention cleanup index
+  expiresAtIdx: index('audit_logs_expires_at_idx').on(table.expiresAt),
+
+  // Related records indexes
+  alertIdIdx: index('audit_logs_alert_id_idx').on(table.alertId),
+  cronJobLogIdIdx: index('audit_logs_cron_job_log_id_idx').on(table.cronJobLogId),
+}));
+
+// ============================================================================
+// AUDIT LOG RELATIONS
+// ============================================================================
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  alert: one(alerts, {
+    fields: [auditLogs.alertId],
+    references: [alerts.id],
+  }),
+  listing: one(listings, {
+    fields: [auditLogs.listingId],
+    references: [listings.id],
+  }),
+  notification: one(notifications, {
+    fields: [auditLogs.notificationId],
+    references: [notifications.id],
+  }),
+  batch: one(alertBatches, {
+    fields: [auditLogs.batchId],
+    references: [alertBatches.id],
+  }),
+  cronJobLog: one(cronJobLogs, {
+    fields: [auditLogs.cronJobLogId],
+    references: [cronJobLogs.id],
+  }),
+}));
+
+// ============================================================================
+// AUDIT LOG TYPE EXPORTS
+// ============================================================================
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;

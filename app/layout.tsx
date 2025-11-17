@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/dashboard/navbar";
+import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
 import "./globals.css";
 
 const inter = Inter({
@@ -91,6 +92,7 @@ export default function RootLayout({
         <body
           className={`${inter.variable} antialiased font-sans`}
         >
+          <UpgradeBanner />
           <Navbar />
           {children}
           <Toaster />

@@ -4,7 +4,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <main className="container mx-auto p-4 md:p-6 lg:p-8">
+    <main className="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
       {children}
     </main>
   );
