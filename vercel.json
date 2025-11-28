@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build && npm run test -- --run",
+  "buildCommand": "rm -rf .next && npm run build && npm run test -- --run",
   "crons": [
     {
       "path": "/api/cron/check-alerts",

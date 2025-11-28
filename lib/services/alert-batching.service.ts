@@ -137,13 +137,13 @@ export async function getActiveBatches(): Promise<Array<AlertBatch & { dbId: str
         with: {
           alert: true,
         },
-        where: eq(alerts.isActive, true),
       },
     },
   });
 
   return batchesWithAlerts
-    .filter(b => b.memberships.length > 0)
+    // Filter to only include batches with active alerts
+    .filter(b => b.memberships.some(m => m.alert?.isActive))
     .map(batch => ({
       dbId: batch.id,
       batchId: batch.criteriaHash,
@@ -156,7 +156,9 @@ export async function getActiveBatches(): Promise<Array<AlertBatch & { dbId: str
         minBaths: batch.minBaths,
         noFee: batch.noFee ?? false,
       },
-      alertIds: batch.memberships.map(m => m.alertId),
+      alertIds: batch.memberships
+        .filter(m => m.alert?.isActive)
+        .map(m => m.alertId),
     }));
 }
 

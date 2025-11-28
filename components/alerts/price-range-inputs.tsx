@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Input } from "@/components/ui/input";
+import { TextInput } from "@mantine/core";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 
 interface PriceRangeInputsProps {
   minPrice: number | null | undefined;
@@ -53,53 +52,35 @@ export function PriceRangeInputs({
       {/* Minimum Price */}
       <div className="space-y-2">
         <Label htmlFor="minPrice">Minimum Price</Label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            $
-          </span>
-          <Input
-            id="minPrice"
-            type="number"
-            placeholder="No minimum"
-            value={minPrice ?? ""}
-            onChange={handleMinChange}
-            disabled={disabled}
-            className={cn("pl-7", minError && "border-destructive")}
-            aria-invalid={!!minError}
-            aria-describedby={minError ? "min-price-error" : undefined}
-          />
-        </div>
-        {minError && (
-          <p id="min-price-error" className="text-sm text-destructive">
-            {minError}
-          </p>
-        )}
+        <TextInput
+          id="minPrice"
+          type="number"
+          placeholder="No minimum"
+          value={minPrice?.toString() ?? ""}
+          onChange={handleMinChange}
+          disabled={disabled}
+          leftSection="$"
+          error={minError}
+          aria-invalid={!!minError}
+          aria-describedby={minError ? "min-price-error" : undefined}
+        />
       </div>
 
       {/* Maximum Price */}
       <div className="space-y-2">
         <Label htmlFor="maxPrice">Maximum Price</Label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            $
-          </span>
-          <Input
-            id="maxPrice"
-            type="number"
-            placeholder="No maximum"
-            value={maxPrice ?? ""}
-            onChange={handleMaxChange}
-            disabled={disabled}
-            className={cn("pl-7", maxError && "border-destructive")}
-            aria-invalid={!!maxError}
-            aria-describedby={maxError ? "max-price-error" : undefined}
-          />
-        </div>
-        {maxError && (
-          <p id="max-price-error" className="text-sm text-destructive">
-            {maxError}
-          </p>
-        )}
+        <TextInput
+          id="maxPrice"
+          type="number"
+          placeholder="No maximum"
+          value={maxPrice?.toString() ?? ""}
+          onChange={handleMaxChange}
+          disabled={disabled}
+          leftSection="$"
+          error={maxError}
+          aria-invalid={!!maxError}
+          aria-describedby={maxError ? "max-price-error" : undefined}
+        />
       </div>
     </div>
   );

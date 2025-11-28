@@ -1,11 +1,9 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import { TextInput, Switch, Button } from "@mantine/core";
 import { AlertFormData } from "../types";
-import { Clock, Zap, Timer, Lock, Bell, Mail, Phone, AlertCircle, ExternalLink, CheckCircleIcon } from "lucide-react";
+import { Clock, Zap, Timer, Lock, Bell, Mail, Phone, AlertCircle, ExternalLink, CheckCircle as CheckCircleIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
@@ -182,15 +180,14 @@ export function StepFour({
           <div className="flex items-start justify-between gap-4 mb-2">
             <h3 className="text-lg font-semibold">Notification Frequency</h3>
             <Button
-              asChild
+              component={Link}
+              href="/subscriptions"
               variant="outline"
               size="sm"
               className="flex-shrink-0"
             >
-              <Link href="/subscriptions" className="flex items-center gap-1.5">
-                View Pricing
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
+              View Pricing
+              <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -367,14 +364,13 @@ export function StepFour({
                             </p>
                           </div>
                           <Button
-                            asChild
+                            component={Link}
+                            href="/subscriptions"
                             size="sm"
                             variant="outline"
                             className="flex-shrink-0 border-amber-500/30 hover:bg-amber-500/10"
                           >
-                            <Link href="/subscriptions">
-                              Upgrade
-                            </Link>
+                            Upgrade
                           </Button>
                         </div>
                       </div>
@@ -408,7 +404,7 @@ export function StepFour({
             </div>
             <Switch
               checked={formData.enableEmailNotifications}
-              onCheckedChange={toggleEmailNotifications}
+              onChange={(e) => toggleEmailNotifications(e.currentTarget.checked)}
               className="flex-shrink-0 ml-4"
               aria-labelledby="email-label"
               aria-describedby="email-description"
@@ -438,7 +434,7 @@ export function StepFour({
               </div>
               <Switch
                 checked={formData.enablePhoneNotifications}
-                onCheckedChange={togglePhoneNotifications}
+                onChange={(e) => togglePhoneNotifications(e.currentTarget.checked)}
                 className="flex-shrink-0 ml-4"
                 aria-labelledby="sms-label"
                 aria-describedby="sms-description"
@@ -458,14 +454,13 @@ export function StepFour({
                     </p>
                   </div>
                   <Button
-                    asChild
-                    size="sm"
+                    component={Link}
+                    href="/subscriptions"
+                    size="xs"
                     variant="outline"
                     className="flex-shrink-0 text-xs border-amber-500/30 hover:bg-amber-500/10"
                   >
-                    <Link href="/subscriptions">
-                      Upgrade
-                    </Link>
+                    Upgrade
                   </Button>
                 </div>
               </div>
@@ -514,7 +509,7 @@ export function StepFour({
                 </p>
               )}
 
-              <Input
+              <TextInput
                 id="phone-number"
                 type="tel"
                 placeholder="(555) 123-4567"

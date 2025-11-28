@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, Search, Menu, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button, ActionIcon, Drawer } from "@mantine/core";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import {
   NavigationMenu,
@@ -40,6 +40,7 @@ export function Navbar() {
   const isMobile = useIsMobile();
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -71,7 +72,7 @@ export function Navbar() {
 
           <SignedOut>
             <SignInButton mode="modal">
-              <Button variant="ghost" size="sm">
+              <Button variant="subtle" size="sm">
                 Sign In
               </Button>
             </SignInButton>
@@ -79,10 +80,8 @@ export function Navbar() {
 
           <SignedIn>
             {isLandingPage ? (
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard">
-                  Dashboard
-                </Link>
+              <Button variant="subtle" size="sm" component={Link} href="/dashboard">
+                Dashboard
               </Button>
             ) : (
               <UserButton
@@ -98,21 +97,35 @@ export function Navbar() {
 
           {/* Mobile Menu (only show on non-landing pages) */}
           {!isLandingPage && (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden" suppressHydrationWarning>
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[280px]">
-                <nav className="flex flex-col gap-4 mt-8">
+            <>
+              <ActionIcon
+                variant="subtle"
+                hiddenFrom="md"
+                onClick={() => setIsMenuOpen(true)}
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-5 w-5" />
+              </ActionIcon>
+              <Drawer
+                opened={isMenuOpen}
+                onClose={() => setIsMenuOpen(false)}
+                position="right"
+                size="280px"
+                withCloseButton
+                title="Navigation"
+                classNames={{
+                  content: "rounded-none",
+                  header: "border-b border-border",
+                }}
+              >
+                <nav className="flex flex-col gap-4 p-2">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                       >
                         <Icon className="h-4 w-4" />
@@ -121,8 +134,8 @@ export function Navbar() {
                     );
                   })}
                 </nav>
-              </SheetContent>
-            </Sheet>
+              </Drawer>
+            </>
           )}
         </div>
       </div>

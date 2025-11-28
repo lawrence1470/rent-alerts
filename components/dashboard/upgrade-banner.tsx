@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Button, ActionIcon, Paper } from "@mantine/core";
 import { Sparkles, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -83,7 +83,7 @@ export function UpgradeBanner() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl"
         >
-          <div className="bg-card rounded-2xl shadow-2xl border border-border p-4 md:p-5">
+          <Paper shadow="xl" radius="lg" p="md" withBorder className="bg-card">
             <div className="flex items-center justify-between gap-4">
               {/* Left: Icon + Text */}
               <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
@@ -103,27 +103,27 @@ export function UpgradeBanner() {
               {/* Right: CTA + Close */}
               <div className="flex items-center gap-2 shrink-0">
                 <Button
-                  asChild
+                  component={Link}
+                  href="/subscriptions"
                   size="sm"
-                  className="rounded-xl px-4 md:px-6 h-9 md:h-10"
+                  radius="xl"
+                  rightSection={<ArrowRight className="h-3.5 w-3.5" />}
                 >
-                  <Link href="/subscriptions" className="inline-flex items-center gap-1.5">
-                    <span className="hidden sm:inline">Upgrade Now</span>
-                    <span className="sm:hidden">Upgrade</span>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
+                  <span className="hidden sm:inline">Upgrade Now</span>
+                  <span className="sm:hidden">Upgrade</span>
                 </Button>
-                <Button
+                <ActionIcon
                   onClick={handleDismiss}
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 md:h-9 md:w-9 text-muted-foreground hover:text-foreground"
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  aria-label="Dismiss upgrade banner"
                 >
                   <X className="h-5 w-5" />
-                </Button>
+                </ActionIcon>
               </div>
             </div>
-          </div>
+          </Paper>
         </motion.div>
       )}
     </AnimatePresence>

@@ -1,64 +1,99 @@
 "use client";
 
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import * as React from "react";
-
+import { Accordion as MantineAccordion } from "@mantine/core";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
 
-const Accordion = AccordionPrimitive.Root;
+interface AccordionProps {
+  type?: "single" | "multiple";
+  collapsible?: boolean;
+  defaultValue?: string | string[];
+  value?: string | string[];
+  onValueChange?: (value: string | string[] | null) => void;
+  className?: string;
+  children?: React.ReactNode;
+}
 
-const AccordionItem = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
->(({ className, ...props }, ref) => (
-  <AccordionPrimitive.Item
-    ref={ref}
-    className={cn("border-b border-border", className)}
-    {...props}
-  />
-));
-AccordionItem.displayName = "AccordionItem";
+function Accordion({
+  type = "single",
+  collapsible = true,
+  defaultValue,
+  value,
+  onValueChange,
+  className,
+  children,
+  ...props
+}: AccordionProps) {
+  return (
+    <MantineAccordion
+      multiple={type === "multiple"}
+      defaultValue={defaultValue as string | string[] | undefined}
+      value={value}
+      onChange={onValueChange}
+      className={cn(className)}
+      variant="separated"
+      {...props}
+    >
+      {children}
+    </MantineAccordion>
+  );
+}
 
-const AccordionTrigger = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <AccordionPrimitive.Header className="flex">
-    <AccordionPrimitive.Trigger
-      ref={ref}
+interface AccordionItemProps extends React.ComponentProps<"div"> {
+  value: string;
+}
+
+function AccordionItem({
+  className,
+  value,
+  children,
+  ...props
+}: AccordionItemProps) {
+  return (
+    <MantineAccordion.Item
+      value={value}
+      className={cn("border-b border-[var(--mantine-color-dark-4)]", className)}
+      {...props}
+    >
+      {children}
+    </MantineAccordion.Item>
+  );
+}
+
+function AccordionTrigger({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"button">) {
+  return (
+    <MantineAccordion.Control
       className={cn(
-        "flex flex-1 items-center justify-between py-4 text-left font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
-        className,
+        "flex flex-1 items-center justify-between py-4 text-left font-semibold transition-all hover:underline",
+        className
       )}
       {...props}
     >
       {children}
-      <ChevronDownIcon
-        width={16}
-        height={16}
-        strokeWidth={2}
-        className="shrink-0 opacity-60 transition-transform duration-200"
-        aria-hidden="true"
-      />
-    </AccordionPrimitive.Trigger>
-  </AccordionPrimitive.Header>
-));
-AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
+    </MantineAccordion.Control>
+  );
+}
 
-const AccordionContent = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <AccordionPrimitive.Content
-    ref={ref}
-    className="overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
-    {...props}
-  >
-    <div className={cn("pb-4 pt-0", className)}>{children}</div>
-  </AccordionPrimitive.Content>
-));
+interface AccordionContentProps {
+  className?: string;
+  children?: React.ReactNode;
+}
 
-AccordionContent.displayName = AccordionPrimitive.Content.displayName;
+function AccordionContent({
+  className,
+  children,
+}: AccordionContentProps) {
+  return (
+    <MantineAccordion.Panel
+      className={cn("text-sm", className)}
+    >
+      {children}
+    </MantineAccordion.Panel>
+  );
+}
 
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

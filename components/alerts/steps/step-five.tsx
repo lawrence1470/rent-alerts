@@ -1,11 +1,9 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { TextInput, Checkbox } from "@mantine/core";
 import { AlertFormData } from "../types";
-import { Bell, Mail, Phone, AlertCircle } from "lucide-react";
-import { Checkbox } from "@headlessui/react";
-import { CheckCircleIcon } from "lucide-react";
+import { Bell, Mail, Phone, AlertCircle, CheckCircle as CheckCircleIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 type StepFiveProps = {
@@ -74,14 +72,15 @@ export function StepFive({
         </h4>
 
         {/* Email Notifications */}
-        <Checkbox
-          checked={formData.enableEmailNotifications}
-          onChange={toggleEmailNotifications}
-          className="group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition focus:outline-none data-checked:border-primary data-checked:bg-primary/5"
+        <div
+          onClick={toggleEmailNotifications}
+          className={`group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition focus:outline-none ${
+            formData.enableEmailNotifications ? 'border-primary bg-primary/5' : ''
+          }`}
         >
           <div className="flex w-full items-center justify-between">
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-muted-foreground group-data-checked:text-primary mt-0.5" />
+              <Mail className={`h-5 w-5 mt-0.5 ${formData.enableEmailNotifications ? 'text-primary' : 'text-muted-foreground'}`} />
               <div className="text-sm">
                 <p className="font-semibold text-foreground">Email Notifications</p>
                 <p className="text-muted-foreground">
@@ -89,19 +88,20 @@ export function StepFive({
                 </p>
               </div>
             </div>
-            <CheckCircleIcon className="h-6 w-6 text-primary opacity-0 transition group-data-checked:opacity-100 flex-shrink-0" />
+            <CheckCircleIcon className={`h-6 w-6 text-primary transition flex-shrink-0 ${formData.enableEmailNotifications ? 'opacity-100' : 'opacity-0'}`} />
           </div>
-        </Checkbox>
+        </div>
 
         {/* Phone Notifications */}
-        <Checkbox
-          checked={formData.enablePhoneNotifications}
-          onChange={togglePhoneNotifications}
-          className="group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition focus:outline-none data-checked:border-primary data-checked:bg-primary/5"
+        <div
+          onClick={togglePhoneNotifications}
+          className={`group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition focus:outline-none ${
+            formData.enablePhoneNotifications ? 'border-primary bg-primary/5' : ''
+          }`}
         >
           <div className="flex w-full items-center justify-between">
             <div className="flex items-start gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground group-data-checked:text-primary mt-0.5" />
+              <Phone className={`h-5 w-5 mt-0.5 ${formData.enablePhoneNotifications ? 'text-primary' : 'text-muted-foreground'}`} />
               <div className="text-sm">
                 <p className="font-semibold text-foreground">SMS Notifications</p>
                 <p className="text-muted-foreground">
@@ -109,9 +109,9 @@ export function StepFive({
                 </p>
               </div>
             </div>
-            <CheckCircleIcon className="h-6 w-6 text-primary opacity-0 transition group-data-checked:opacity-100 flex-shrink-0" />
+            <CheckCircleIcon className={`h-6 w-6 text-primary transition flex-shrink-0 ${formData.enablePhoneNotifications ? 'opacity-100' : 'opacity-0'}`} />
           </div>
-        </Checkbox>
+        </div>
 
         {/* Warning - only show if no method is selected */}
         {hasNoNotificationMethod && (
@@ -147,14 +147,13 @@ export function StepFive({
               <Label htmlFor="phone-number">
                 Phone Number <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <TextInput
                 id="phone-number"
                 type="tel"
                 placeholder="(555) 123-4567"
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 maxLength={14}
-                className="text-base"
               />
               <p className="text-xs text-muted-foreground">
                 US phone numbers only. Standard messaging rates may apply.

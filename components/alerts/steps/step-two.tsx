@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
-import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, Checkbox, Badge } from "@mantine/core";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { AlertFormData } from "../types";
 import { NYC_NEIGHBORHOODS, getNeighborhoodsByBorough } from "@/lib/neighborhoods";
 
@@ -14,7 +12,7 @@ type StepTwoProps = {
 };
 
 export function StepTwo({ formData, updateFormData }: StepTwoProps) {
-  const [selectedBoroughIndex, setSelectedBoroughIndex] = useState(0);
+  const [selectedBorough, setSelectedBorough] = useState<string>(NYC_NEIGHBORHOODS[0]?.name || "");
 
   // Parse selected neighborhoods from comma-separated string
   const selectedNeighborhoods = useMemo(
@@ -63,12 +61,14 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
     return boroughNeighborhoods.filter(n => selectedNeighborhoods.has(n)).length;
   };
 
+  const currentBorough = NYC_NEIGHBORHOODS.find(b => b.name === selectedBorough);
+
   return (
     <div className="space-y-4 relative">
       {/* Selected count badge - top right */}
       {selectedNeighborhoods.size > 0 && (
         <div className="absolute top-0 right-0 z-10">
-          <Badge variant="secondary" className="text-sm">
+          <Badge color="violet" size="lg">
             {selectedNeighborhoods.size} neighborhood{selectedNeighborhoods.size !== 1 ? 's' : ''} selected
           </Badge>
         </div>
@@ -84,114 +84,67 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
         </p>
       </div>
 
-      <TabGroup selectedIndex={selectedBoroughIndex} onChange={setSelectedBoroughIndex}>
-        <div className="flex flex-col">
-          {/* Horizontal Tab List (folder style) for all screens */}
-          <TabList className="flex gap-1 p-1 overflow-x-auto -mx-1 px-1 mb-4">
-            {NYC_NEIGHBORHOODS.map((borough) => {
-              const selectedCount = getBoroughSelectedCount(borough.name);
-              return (
-                <Tab
-                  key={borough.name}
-                  className="
-                    text-sm md:text-base font-medium transition-all
-                    focus:outline-none cursor-pointer group
-                    whitespace-nowrap flex-shrink-0
-
-                    /* Folder tab style for all screens */
-                    rounded-t-lg rounded-b-none
-                    border border-b-0
-
-                    /* Selected state */
-                    data-[selected]:bg-card data-[selected]:border-border
-                    data-[selected]:text-foreground
-
-                    /* Unselected state */
-                    bg-muted/50 border-transparent
-                    text-foreground
-
-                    /* Hover */
-                    hover:bg-muted
-
-                    /* Spacing */
-                    py-2.5 md:py-3.5 px-3 md:px-4
-
-                    /* Layout */
-                    flex items-center justify-between gap-2
-                  "
-                >
-                  <span className="flex-1 text-left">{borough.name}</span>
-                  {selectedCount > 0 && (
-                    <Badge
-                      variant="secondary"
-                      className="ml-1 text-xs group-data-[selected]:bg-primary/10 group-data-[selected]:text-foreground"
-                    >
+      <Tabs value={selectedBorough} onChange={(value) => setSelectedBorough(value || "")}>
+        <Tabs.List className="flex gap-1 p-1 overflow-x-auto -mx-1 px-1 mb-4">
+          {NYC_NEIGHBORHOODS.map((borough) => {
+            const selectedCount = getBoroughSelectedCount(borough.name);
+            return (
+              <Tabs.Tab
+                key={borough.name}
+                value={borough.name}
+                className="text-sm md:text-base font-medium"
+                rightSection={
+                  selectedCount > 0 ? (
+                    <Badge size="sm" color="violet" variant="light">
                       {selectedCount}
                     </Badge>
-                  )}
-                </Tab>
-              );
-            })}
-          </TabList>
+                  ) : null
+                }
+              >
+                {borough.name}
+              </Tabs.Tab>
+            );
+          })}
+        </Tabs.List>
 
-          {/* Content area */}
-          <TabPanels className="flex-1 border-t border-border pt-4">
-            {NYC_NEIGHBORHOODS.map((borough) => (
-              <TabPanel key={borough.name}>
-                <div className="space-y-6">
-                  {borough.groups.map((group) => {
-                    const allSelected = isGroupSelected(group.neighborhoods);
-                    const partiallySelected = isGroupPartiallySelected(group.neighborhoods);
+        {/* Content area */}
+        {NYC_NEIGHBORHOODS.map((borough) => (
+          <Tabs.Panel key={borough.name} value={borough.name} className="pt-4 border-t border-border">
+            <div className="space-y-6">
+              {borough.groups.map((group) => {
+                const allSelected = isGroupSelected(group.neighborhoods);
+                const partiallySelected = isGroupPartiallySelected(group.neighborhoods);
 
-                    return (
-                      <div key={group.label} className="space-y-3">
-                        {/* Group header checkbox */}
-                        <div className="flex items-center space-x-2 pb-2 border-b">
-                          <Checkbox
-                            id={`group-${group.label}`}
-                            checked={allSelected}
-                            ref={(el) => {
-                              if (el) {
-                                (el as any).indeterminate = partiallySelected && !allSelected;
-                              }
-                            }}
-                            onCheckedChange={() => toggleGroup(group.neighborhoods)}
-                          />
-                          <Label
-                            htmlFor={`group-${group.label}`}
-                            className="text-sm font-semibold text-muted-foreground cursor-pointer"
-                          >
-                            {group.label}
-                          </Label>
-                        </div>
+                return (
+                  <div key={group.label} className="space-y-3">
+                    {/* Group header checkbox */}
+                    <div className="flex items-center space-x-2 pb-2 border-b">
+                      <Checkbox
+                        checked={allSelected}
+                        indeterminate={partiallySelected && !allSelected}
+                        onChange={() => toggleGroup(group.neighborhoods)}
+                        label={<span className="text-sm font-semibold text-muted-foreground">{group.label}</span>}
+                      />
+                    </div>
 
-                        {/* Individual neighborhoods */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6">
-                          {group.neighborhoods.map((neighborhood) => (
-                            <div key={neighborhood} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={neighborhood}
-                                checked={selectedNeighborhoods.has(neighborhood)}
-                                onCheckedChange={() => toggleNeighborhood(neighborhood)}
-                              />
-                              <Label
-                                htmlFor={neighborhood}
-                                className="text-sm cursor-pointer leading-tight"
-                              >
-                                {neighborhood}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </TabPanel>
-            ))}
-          </TabPanels>
-        </div>
-      </TabGroup>
+                    {/* Individual neighborhoods */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-6">
+                      {group.neighborhoods.map((neighborhood) => (
+                        <Checkbox
+                          key={neighborhood}
+                          checked={selectedNeighborhoods.has(neighborhood)}
+                          onChange={() => toggleNeighborhood(neighborhood)}
+                          label={<span className="text-sm leading-tight">{neighborhood}</span>}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Tabs.Panel>
+        ))}
+      </Tabs>
     </div>
   );
 }

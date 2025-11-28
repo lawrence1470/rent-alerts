@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Zap, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { Badge, Text } from "@mantine/core";
+import { Zap, Clock } from "lucide-react";
 
 interface AccessPeriod {
   tierId: string;
@@ -13,7 +12,8 @@ interface AccessPeriod {
 }
 
 export function SubscriptionBadges() {
-  const [hasPremium, setHasPremium] = useState<boolean | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null);
+  const [hasPremium, setHasPremium] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,38 +28,39 @@ export function SubscriptionBadges() {
         const accessPeriods: AccessPeriod[] = data.accessPeriods || [];
 
         // Check if user has any paid tiers (not just free tier)
-        const hasPaid = accessPeriods.some(period => period.tierId !== '1hour');
-        setHasPremium(hasPaid);
+        const paidPeriod = accessPeriods.find(period => period.tierId !== '1hour');
+        if (paidPeriod) {
+          setHasPremium(true);
+          setCurrentPlan(paidPeriod.tierName);
+        } else {
+          setHasPremium(false);
+          setCurrentPlan("Free");
+        }
+      } else {
+        setCurrentPlan("Free");
       }
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
+      setCurrentPlan("Free");
     } finally {
       setLoading(false);
     }
   }
 
-  if (loading) {
+  if (loading || !currentPlan) {
     return null;
   }
 
   return (
-    <div className="flex items-center gap-2">
-      {hasPremium ? (
-        <Badge variant="default" className="flex items-center gap-1.5 px-2 md:px-3 py-1">
-          <Zap className="h-3 w-3" />
-          <span className="text-xs font-medium">Premium</span>
-        </Badge>
-      ) : (
-        <Link href="/subscriptions">
-          <Badge
-            variant="outline"
-            className="flex items-center gap-1.5 px-2 md:px-3 py-1 cursor-pointer transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <Sparkles className="h-3 w-3 opacity-60" />
-            <span className="text-xs">Upgrade</span>
-          </Badge>
-        </Link>
-      )}
-    </div>
+    <Badge
+      variant={hasPremium ? "gradient" : "light"}
+      gradient={hasPremium ? { from: "yellow", to: "orange", deg: 90 } : undefined}
+      color={hasPremium ? undefined : "dark"}
+      leftSection={hasPremium ? <Zap className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+      size="lg"
+      radius="md"
+    >
+      {currentPlan}
+    </Badge>
   );
 }

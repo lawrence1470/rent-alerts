@@ -4,7 +4,7 @@ import * as React from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { Button } from './button';
+import { ActionIcon } from '@mantine/core';
 
 const bannerVariants = cva(
     'relative overflow-hidden rounded-md border shadow-lg text-sm',
@@ -108,9 +108,9 @@ export function Banner({
                     {action && action}
 
                     {closable && (
-                        <Button onClick={onHide} size="icon" variant="ghost" className="h-8 w-8">
+                        <ActionIcon onClick={onHide} variant="subtle" size="sm">
                             <X className="h-4 w-4" />
-                        </Button>
+                        </ActionIcon>
                     )}
                 </div>
             </div>

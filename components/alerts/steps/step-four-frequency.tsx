@@ -2,13 +2,10 @@
 
 import { Label } from "@/components/ui/label";
 import { AlertFormData } from "../types";
-import { Clock, Zap, Timer, Lock, MessageSquare, ExternalLink } from "lucide-react";
-import { Checkbox } from "@headlessui/react";
-import { CheckCircleIcon } from "lucide-react";
+import { Clock, Zap, Timer, Lock, MessageSquare, ExternalLink, CheckCircle as CheckCircleIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import { Switch, Button, UnstyledButton } from "@mantine/core";
 import Link from "next/link";
 
 type StepFourFrequencyProps = {
@@ -101,15 +98,15 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
           </p>
         </div>
         <Button
-          asChild
+          component={Link}
+          href="/subscriptions"
+          target="_blank"
           variant="outline"
           size="sm"
           className="flex-shrink-0"
         >
-          <Link href="/subscriptions" target="_blank" className="flex items-center gap-1.5">
-            View Pricing
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
+          View Pricing
+          <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
         </Button>
       </div>
 
@@ -122,18 +119,17 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
 
           return (
             <div key={option.value} className="relative">
-              <Checkbox
-                checked={isSelected}
-                onChange={() => {
+              <UnstyledButton
+                onClick={() => {
                   if (!isLocked) {
                     handleFrequencyChange(option.value);
                   }
                 }}
                 disabled={isLocked}
                 className={`
-                  group relative flex cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition
+                  group relative flex w-full cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition
                   focus:outline-none
-                  data-checked:border-primary data-checked:bg-primary/5
+                  ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}
                   ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}
                 `}
               >
@@ -193,8 +189,9 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
                             <Switch
                               id={`sms-${option.value}`}
                               checked={formData.enablePhoneNotifications}
-                              onCheckedChange={(checked) => {
-                                updateFormData({ enablePhoneNotifications: checked });
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                updateFormData({ enablePhoneNotifications: e.currentTarget.checked });
                               }}
                               onClick={(e) => e.stopPropagation()}
                             />
@@ -222,7 +219,7 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
                     />
                   )}
                 </div>
-              </Checkbox>
+              </UnstyledButton>
             </div>
           );
         })}

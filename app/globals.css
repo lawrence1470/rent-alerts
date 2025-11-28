@@ -131,7 +131,8 @@
   --light-foreground: var(--brand-foreground);
 }
 
-.dark {
+.dark,
+[data-mantine-color-scheme="dark"] {
   /* Accent colors - Slate/Indigo Theme */
   --brand: oklch(0.70 0.12 270);
   --brand-foreground: oklch(0.95 0.01 270);

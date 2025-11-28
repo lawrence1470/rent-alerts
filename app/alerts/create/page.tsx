@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mantine/core";
 import { StatefulButton, useStatefulButton } from "@/components/ui/stateful-button";
 import { StepOne } from "@/components/alerts/steps/step-one";
 import { StepTwo } from "@/components/alerts/steps/step-two";

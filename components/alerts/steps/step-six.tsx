@@ -1,13 +1,7 @@
 "use client";
 
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+import { Switch, Popover, Badge } from "@mantine/core";
 import { Info, Building2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { AlertFormData } from "../types";
 import { motion, AnimatePresence } from "motion/react";
@@ -39,8 +33,8 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                 >
                   Check if rent stabilized
                 </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
+                <Popover width={320} position="bottom-start" withArrow shadow="md">
+                  <Popover.Target>
                     <button
                       type="button"
                       className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
@@ -48,8 +42,8 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                     >
                       <Info className="h-4 w-4" />
                     </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80" align="start">
+                  </Popover.Target>
+                  <Popover.Dropdown>
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">
                         How Rent Stabilization Check Works
@@ -60,14 +54,14 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                         you make informed decisions.
                       </p>
                     </div>
-                  </PopoverContent>
+                  </Popover.Dropdown>
                 </Popover>
               </div>
               <Switch
                 id="rent-stabilized"
                 checked={formData.filterRentStabilized}
-                onCheckedChange={(checked) =>
-                  updateFormData({ filterRentStabilized: checked })
+                onChange={(e) =>
+                  updateFormData({ filterRentStabilized: e.currentTarget.checked })
                 }
               />
             </div>
@@ -95,7 +89,7 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                       <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <span className="text-foreground">123 Main St, Apt 4B</span>
-                        <Badge variant="secondary" className="ml-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">
+                        <Badge color="green" variant="light" size="xs" className="ml-2">
                           85% Likely Rent Stabilized
                         </Badge>
                       </div>
@@ -106,7 +100,7 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                       <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <span className="text-foreground">456 Park Ave, Apt 2C</span>
-                        <Badge variant="secondary" className="ml-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-xs">
+                        <Badge color="yellow" variant="light" size="xs" className="ml-2">
                           45% Possibly Stabilized
                         </Badge>
                       </div>
@@ -117,7 +111,7 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                       <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <span className="text-foreground">789 Broadway, Apt 10A</span>
-                        <Badge variant="secondary" className="ml-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-xs">
+                        <Badge color="red" variant="light" size="xs" className="ml-2">
                           15% Unlikely Stabilized
                         </Badge>
                       </div>
@@ -143,8 +137,8 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
               >
                 Only notify when new apartments are found
               </Label>
-              <Popover>
-                <PopoverTrigger asChild>
+              <Popover width={320} position="bottom-start" withArrow shadow="md">
+                <Popover.Target>
                   <button
                     type="button"
                     className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
@@ -152,8 +146,8 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                   >
                     <Info className="h-4 w-4" />
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80" align="start">
+                </Popover.Target>
+                <Popover.Dropdown>
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm">
                       Smart Notification Control
@@ -165,14 +159,14 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                       <strong>Disabled:</strong> You&apos;ll receive notifications on every check cycle, even if no new apartments are found. This may result in frequent notifications without new results.
                     </p>
                   </div>
-                </PopoverContent>
+                </Popover.Dropdown>
               </Popover>
             </div>
             <Switch
               id="notify-new-only"
               checked={formData.notifyOnlyNewApartments ?? true}
-              onCheckedChange={(checked) =>
-                updateFormData({ notifyOnlyNewApartments: checked })
+              onChange={(e) =>
+                updateFormData({ notifyOnlyNewApartments: e.currentTarget.checked })
               }
             />
           </div>

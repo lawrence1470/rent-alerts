@@ -1,6 +1,8 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mantine/core";
 
 export function CTA() {
   return (
@@ -19,14 +21,13 @@ export function CTA() {
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button
             size="lg"
-            variant="secondary"
-            asChild
+            variant="white"
+            component={Link}
+            href="/sign-up"
             className="min-w-[200px] bg-background text-foreground hover:bg-background/90"
+            rightSection={<ArrowRight className="h-4 w-4" />}
           >
-            <Link href="/sign-up">
-              Stay Ahead of the Competition
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+            Stay Ahead of the Competition
           </Button>
         </div>
         <p className="mt-6 text-sm text-primary-foreground/70">

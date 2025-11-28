@@ -1,6 +1,6 @@
 "use client";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion as MantineAccordion } from "@mantine/core";
 import Link from "next/link";
 
 const faqs = [
@@ -44,26 +44,26 @@ export function FAQ() {
         </div>
 
         <div className="mx-auto mt-12 max-w-xl">
-          <Accordion
-            type="single"
-            collapsible
-            className="bg-card ring-muted w-full rounded-2xl border px-8 py-3 shadow-sm ring-4 dark:ring-0"
+          <MantineAccordion
+            variant="separated"
+            radius="lg"
+            className="bg-card ring-muted w-full rounded-2xl border px-4 py-3 shadow-sm ring-4 dark:ring-0"
           >
             {faqs.map((faq, idx) => (
-              <AccordionItem
+              <MantineAccordion.Item
                 key={`item-${idx + 1}`}
                 value={`item-${idx + 1}`}
                 className="border-dashed"
               >
-                <AccordionTrigger className="cursor-pointer text-base hover:no-underline">
+                <MantineAccordion.Control className="cursor-pointer text-base">
                   {faq.question}
-                </AccordionTrigger>
-                <AccordionContent>
-                  <p className="text-base">{faq.answer}</p>
-                </AccordionContent>
-              </AccordionItem>
+                </MantineAccordion.Control>
+                <MantineAccordion.Panel className="text-base pb-3">
+                  <p>{faq.answer}</p>
+                </MantineAccordion.Panel>
+              </MantineAccordion.Item>
             ))}
-          </Accordion>
+          </MantineAccordion>
 
           <p className="text-muted-foreground mt-6 px-8">
             Can't find what you're looking for? Contact our{" "}

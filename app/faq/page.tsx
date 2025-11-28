@@ -6,7 +6,7 @@
 
 "use client";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion } from "@mantine/core";
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -165,25 +165,22 @@ export default function FAQPage() {
 
                 {/* Accordion */}
                 <Accordion
-                  type="single"
-                  collapsible
+                  variant="separated"
                   className="bg-card w-full rounded-2xl border px-6 py-2 shadow-sm ring-4 ring-muted dark:ring-0"
                 >
                   {category.questions.map((faq, idx) => (
-                    <AccordionItem
+                    <Accordion.Item
                       key={`${category.category}-${idx}`}
                       value={`${category.category}-${idx}`}
                       className="border-dashed"
                     >
-                      <AccordionTrigger className="cursor-pointer text-base hover:no-underline text-left">
+                      <Accordion.Control className="cursor-pointer text-base text-left">
                         {faq.question}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <p className="text-base text-muted-foreground leading-relaxed">
-                          {faq.answer}
-                        </p>
-                      </AccordionContent>
-                    </AccordionItem>
+                      </Accordion.Control>
+                      <Accordion.Panel className="text-base text-muted-foreground leading-relaxed pb-3">
+                        <p>{faq.answer}</p>
+                      </Accordion.Panel>
+                    </Accordion.Item>
                   ))}
                 </Accordion>
               </div>

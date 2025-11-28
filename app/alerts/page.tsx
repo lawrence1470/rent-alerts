@@ -1,17 +1,8 @@
 "use client";
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { Building2, Plus, Clock, Timer, Zap, Bell, Lock, Trash2, Edit, MoreVertical, Pause, ChevronRight } from "lucide-react";
-import { EnvelopeIcon, DevicePhoneMobileIcon } from "@heroicons/react/20/solid";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Building2, Plus, Clock, Timer, Zap, Bell, Lock, Trash2, Edit, MoreVertical, Pause, ChevronRight, Mail, Smartphone } from "lucide-react";
+import { Button, Badge, Card, Modal, Menu, ActionIcon } from "@mantine/core";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +13,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { AlertCountdown } from "@/components/alerts/alert-countdown";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -161,12 +145,10 @@ export default function AlertsPage() {
             Get notified when new listings match your criteria
           </p>
         </div>
-        <Link href="/alerts/create">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Create Alert
-          </Button>
-        </Link>
+        <Button component={Link} href="/alerts/create" className="gap-2">
+          <Plus className="h-4 w-4" />
+          Create Alert
+        </Button>
       </div>
 
       {loading ? (
@@ -199,130 +181,91 @@ export default function AlertsPage() {
             Create your first alert to start receiving notifications when new
             rental listings match your search criteria.
           </p>
-          <Link href="/alerts/create">
-            <Button size="lg" className="gap-2 cursor-pointer hover:scale-105 transition-all">
-              <Plus className="h-4 w-4" />
-              Create Your First Alert
-            </Button>
-          </Link>
+          <Button component={Link} href="/alerts/create" size="lg" className="gap-2 cursor-pointer hover:scale-105 transition-all">
+            <Plus className="h-4 w-4" />
+            Create Your First Alert
+          </Button>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Active Alerts */}
           {activeAlerts.length > 0 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Active Alerts</h2>
-              <div className="grid gap-4">
+              <h2 className="text-lg font-medium text-muted-foreground mb-3">Active Alerts</h2>
+              <div className="space-y-2">
                 {activeAlerts.map((alert) => (
-                  <Card key={alert.id} className="p-6">
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <h3 className="text-lg font-semibold">{alert.name}</h3>
-                          <Badge variant="outline" className="gap-1">
-                            {TIER_ICONS[alert.preferredFrequency]}
-                            {TIER_LABELS[alert.preferredFrequency]}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <button
-                            onClick={() => setSelectedAlertForNeighborhoods(alert)}
-                            className="flex items-center gap-1 hover:text-foreground transition-colors"
+                  <div
+                    key={alert.id}
+                    className="group flex items-center gap-4 p-4 rounded-lg border border-border/50 bg-card/50 hover:bg-card hover:border-border transition-all"
+                  >
+                    {/* Left: Name & Neighborhoods */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium truncate">{alert.name}</h3>
+                        <span className="text-xs text-muted-foreground">
+                          {TIER_LABELS[alert.preferredFrequency]}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedAlertForNeighborhoods(alert)}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+                      >
+                        {alert.areas.split(',').length} neighborhoods
+                      </button>
+                    </div>
+
+                    {/* Center: Notification types */}
+                    <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
+                      {alert.enableEmailNotifications && <Mail className="h-3.5 w-3.5" />}
+                      {alert.enablePhoneNotifications && <Smartphone className="h-3.5 w-3.5" />}
+                    </div>
+
+                    {/* Right: Status */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="flex items-center gap-1.5 text-emerald-500">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Live
+                        </span>
+                        <span className="text-muted-foreground">
+                          <AlertCountdown
+                            lastChecked={alert.lastChecked ? new Date(alert.lastChecked) : null}
+                            preferredFrequency={alert.preferredFrequency}
+                            isActive={alert.isActive}
+                          />
+                        </span>
+                      </div>
+
+                      {/* Menu */}
+                      <Menu shadow="md" width={160}>
+                        <Menu.Target>
+                          <ActionIcon
+                            variant="subtle"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            <span>{alert.areas.split(',').length} neighborhoods</span>
-                            <ChevronRight className="h-3 w-3" />
-                          </button>
-                          {(alert.minPrice || alert.maxPrice) && (
-                            <span>
-                              • ${alert.minPrice || 0} - ${alert.maxPrice || '∞'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-3">
-                        {/* Live indicator and countdown */}
-                        <div className="flex items-center gap-2">
-                          <div className="flex flex-col items-end gap-2">
-                            <div className="flex items-center gap-1.5">
-                              <div className="relative">
-                                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                <div className="absolute inset-0 h-2 w-2 rounded-full bg-green-500 animate-ping" />
-                              </div>
-                              <span className="text-xs font-medium text-green-600 dark:text-green-400">Live</span>
-                            </div>
-                            <AlertCountdown
-                              lastChecked={alert.lastChecked ? new Date(alert.lastChecked) : null}
-                              preferredFrequency={alert.preferredFrequency}
-                              isActive={alert.isActive}
-                            />
-                          </div>
-
-                          {/* Dropdown menu */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Pause className="h-4 w-4 mr-2" />
-                                Pause Alert
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/alerts/${alert.id}/edit`}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit Alert
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => setAlertToDelete(alert)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Alert
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
+                            <MoreVertical className="h-4 w-4" />
+                          </ActionIcon>
+                        </Menu.Target>
+                        <Menu.Dropdown>
+                          <Menu.Item
+                            component={Link}
+                            href={`/alerts/${alert.id}/edit`}
+                            leftSection={<Edit className="h-3.5 w-3.5" />}
+                          >
+                            Edit
+                          </Menu.Item>
+                          <Menu.Item
+                            color="red"
+                            leftSection={<Trash2 className="h-3.5 w-3.5" />}
+                            onClick={() => setAlertToDelete(alert)}
+                          >
+                            Delete
+                          </Menu.Item>
+                        </Menu.Dropdown>
+                      </Menu>
                     </div>
-
-                    {/* Notification Methods - Bottom */}
-                    <div className="flex items-center justify-between pt-4 border-t border-border mt-2">
-                      <div className="flex items-center gap-3">
-                        {alert.enableEmailNotifications && (
-                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <EnvelopeIcon className="h-4 w-4" />
-                            Email
-                          </span>
-                        )}
-                        {alert.enablePhoneNotifications && (
-                          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <DevicePhoneMobileIcon className="h-4 w-4" />
-                            SMS
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Statistics - Bottom Right */}
-                      {alertStats[alert.id] && (
-                        <div className="text-sm text-muted-foreground">
-                          {alertStats[alert.id].totalNewListingsFound > 0 ? (
-                            <>
-                              <span className="font-semibold text-foreground">
-                                {alertStats[alert.id].totalNewListingsFound}
-                              </span>
-                              {' '}apartment{alertStats[alert.id].totalNewListingsFound === 1 ? '' : 's'} found
-                            </>
-                          ) : (
-                            'No apartments found yet'
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             </div>
@@ -344,7 +287,7 @@ export default function AlertsPage() {
                             {TIER_ICONS[alert.preferredFrequency]}
                             {TIER_LABELS[alert.preferredFrequency]}
                           </Badge>
-                          <Badge variant="secondary" className="bg-amber-500/10 text-amber-900 dark:text-amber-100">
+                          <Badge color="yellow" className="bg-amber-500/10 text-amber-900 dark:text-amber-100">
                             Inactive
                           </Badge>
                         </div>
@@ -371,28 +314,25 @@ export default function AlertsPage() {
                           </p>
                         </div>
                         <Button
-                          asChild
+                          component={Link}
+                          href="/subscriptions"
                           size="sm"
                           className="bg-amber-600 hover:bg-amber-700 text-white"
                         >
-                          <Link href="/subscriptions">
-                            Upgrade to {TIER_LABELS[alert.preferredFrequency]}
-                          </Link>
+                          Upgrade to {TIER_LABELS[alert.preferredFrequency]}
                         </Button>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/alerts/${alert.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
+                        <ActionIcon component={Link} href={`/alerts/${alert.id}/edit`} variant="subtle" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </ActionIcon>
+                        <ActionIcon
+                          variant="subtle"
                           size="sm"
                           onClick={() => setAlertToDelete(alert)}
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </ActionIcon>
                       </div>
                     </div>
                   </Card>
@@ -404,23 +344,24 @@ export default function AlertsPage() {
       )}
 
       {/* Neighborhoods Modal */}
-      <Dialog open={selectedAlertForNeighborhoods !== null} onOpenChange={() => setSelectedAlertForNeighborhoods(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Neighborhoods for {selectedAlertForNeighborhoods?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
-            {selectedAlertForNeighborhoods?.areas.split(',').map((area, index) => (
-              <div
-                key={index}
-                className="px-2 py-1 text-xs bg-muted rounded text-foreground"
-              >
-                {area.trim()}
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <Modal
+        opened={selectedAlertForNeighborhoods !== null}
+        onClose={() => setSelectedAlertForNeighborhoods(null)}
+        title={`Neighborhoods for ${selectedAlertForNeighborhoods?.name}`}
+        size="lg"
+        centered
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+          {selectedAlertForNeighborhoods?.areas.split(',').map((area, index) => (
+            <div
+              key={index}
+              className="px-2 py-1 text-xs bg-muted rounded text-foreground"
+            >
+              {area.trim()}
+            </div>
+          ))}
+        </div>
+      </Modal>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={alertToDelete !== null} onOpenChange={() => setAlertToDelete(null)}>

@@ -1,6 +1,8 @@
+"use client";
+
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mantine/core";
 import { Highlighter } from "@/components/ui/highlighter";
 import { cn } from "@/lib/utils";
 
@@ -134,12 +136,13 @@ export function Pricing() {
               </ul>
 
               <Button
-                asChild
-                variant={plan.popular ? "default" : "outline"}
+                component={Link}
+                href="/dashboard"
+                variant={plan.popular ? "filled" : "outline"}
                 size="lg"
-                className="w-full"
+                fullWidth
               >
-                <Link href="/dashboard">{plan.cta}</Link>
+                {plan.cta}
               </Button>
             </div>
           ))}

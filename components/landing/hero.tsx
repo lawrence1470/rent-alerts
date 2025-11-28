@@ -2,7 +2,7 @@
 
 import { ArrowRight, Bell, Search } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mantine/core";
 import { HyperText } from "@/components/ui/hyper-text";
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 
@@ -71,11 +71,15 @@ export function Hero() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row lg:justify-start">
-              <Button size="lg" variant="outline" asChild className="min-w-[200px] backdrop-blur-sm">
-                <Link href="/dashboard">
-                  <Bell className="mr-2 h-4 w-4" />
-                  Create Your Alert Now
-                </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                component={Link}
+                href="/dashboard"
+                className="min-w-[200px] backdrop-blur-sm"
+                leftSection={<Bell className="h-4 w-4" />}
+              >
+                Create Your Alert Now
               </Button>
             </div>
 
