@@ -86,6 +86,34 @@ export function requiresPayment(tierId: TierId): boolean {
 }
 
 /**
+ * Get discount percentage based on number of weeks
+ * - 1-3 weeks: 0%
+ * - 4-7 weeks: 10%
+ * - 8-11 weeks: 20%
+ * - 12+ weeks: 30%
+ */
+export function getDiscountPercent(weeks: number): number {
+  if (weeks >= 12) return 30;
+  if (weeks >= 8) return 20;
+  if (weeks >= 4) return 10;
+  return 0;
+}
+
+/**
+ * Calculate price with tiered discount
+ */
+export function calculatePriceWithDiscount(
+  pricePerWeekCents: number,
+  weeks: number
+): { subtotal: number; discount: number; total: number; discountPercent: number } {
+  const subtotal = pricePerWeekCents * weeks;
+  const discountPercent = getDiscountPercent(weeks);
+  const discount = Math.round(subtotal * (discountPercent / 100));
+  const total = subtotal - discount;
+  return { subtotal, discount, total, discountPercent };
+}
+
+/**
  * Get tier configuration
  */
 export function getTierConfig(tierId: TierId) {

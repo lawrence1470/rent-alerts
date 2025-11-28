@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Search, Menu, Settings } from "lucide-react";
+import { Bell, Search, Menu, Settings, HelpCircle } from "lucide-react";
 import { Button, ActionIcon, Drawer } from "@mantine/core";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import {
@@ -34,6 +34,11 @@ const navItems = [
     href: "/subscriptions",
     icon: Settings,
   },
+  {
+    title: "FAQ",
+    href: "/faq",
+    icon: HelpCircle,
+  },
 ];
 
 export function Navbar() {
@@ -47,7 +52,7 @@ export function Navbar() {
       <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4 md:px-6 lg:px-8">
         {/* Logo */}
         <Logo href="/" showText showTagline size="sm" className="hidden sm:flex" />
-        <Logo href="/" showText={false} size="sm" className="sm:hidden" />
+        <Logo href="/" showText size="sm" className="sm:hidden mr-auto" />
 
         {/* Desktop Navigation - Centered (only show on non-landing pages) */}
         {!isLandingPage && (

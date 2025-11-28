@@ -40,10 +40,10 @@ type AlertStats = {
 };
 
 const TIER_ICONS = {
-  '1hour': <Clock className="h-4 w-4" />,
-  '1hour-sms': <Bell className="h-4 w-4" />,
-  '30min': <Timer className="h-4 w-4" />,
-  '15min': <Zap className="h-4 w-4" />,
+  '1hour': <Clock className="h-3 w-3" />,
+  '1hour-sms': <Bell className="h-3 w-3" />,
+  '30min': <Timer className="h-3 w-3" />,
+  '15min': <Zap className="h-3 w-3" />,
 };
 
 const TIER_LABELS = {
@@ -52,6 +52,31 @@ const TIER_LABELS = {
   '30min': '30-Min Checks',
   '15min': '15-Min Checks',
 };
+
+const TIER_COLORS: Record<string, string> = {
+  '1hour': 'gray',
+  '1hour-sms': 'blue',
+  '30min': 'blue',
+  '15min': 'violet',
+};
+
+function getRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Created just now';
+  if (diffInSeconds < 3600) {
+    const mins = Math.floor(diffInSeconds / 60);
+    return `Created ${mins} ${mins === 1 ? 'minute' : 'minutes'} ago`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `Created ${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+  }
+  const days = Math.floor(diffInSeconds / 86400);
+  return `Created ${days} ${days === 1 ? 'day' : 'days'} ago`;
+}
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -145,10 +170,21 @@ export default function AlertsPage() {
             Get notified when new listings match your criteria
           </p>
         </div>
-        <Button component={Link} href="/alerts/create" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Alert
-        </Button>
+        <div className="flex items-center gap-4">
+          {activeAlerts.length > 0 && (
+            <div className="hidden sm:flex items-center px-3 py-1.5 rounded-full bg-amber-400 text-amber-950">
+              <AlertCountdown
+                lastChecked={activeAlerts[0]?.lastChecked ? new Date(activeAlerts[0].lastChecked) : null}
+                preferredFrequency={activeAlerts[0]?.preferredFrequency}
+                isActive={true}
+              />
+            </div>
+          )}
+          <Button component={Link} href="/alerts/create" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Alert
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -202,9 +238,14 @@ export default function AlertsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium truncate">{alert.name}</h3>
-                        <span className="text-xs text-muted-foreground">
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          color={TIER_COLORS[alert.preferredFrequency]}
+                          leftSection={TIER_ICONS[alert.preferredFrequency]}
+                        >
                           {TIER_LABELS[alert.preferredFrequency]}
-                        </span>
+                        </Badge>
                       </div>
                       <button
                         onClick={() => setSelectedAlertForNeighborhoods(alert)}
@@ -222,17 +263,18 @@ export default function AlertsPage() {
 
                     {/* Right: Status */}
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2 text-xs">
+                      <div className="flex flex-col items-end gap-0.5 text-xs">
                         <span className="flex items-center gap-1.5 text-emerald-500">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                           Live
                         </span>
-                        <span className="text-muted-foreground">
-                          <AlertCountdown
-                            lastChecked={alert.lastChecked ? new Date(alert.lastChecked) : null}
-                            preferredFrequency={alert.preferredFrequency}
-                            isActive={alert.isActive}
-                          />
+                        <AlertCountdown
+                          lastChecked={alert.lastChecked ? new Date(alert.lastChecked) : null}
+                          preferredFrequency={alert.preferredFrequency}
+                          isActive={alert.isActive}
+                        />
+                        <span className="text-muted-foreground/70 text-[10px]">
+                          {getRelativeTime(alert.createdAt)}
                         </span>
                       </div>
 
@@ -304,6 +346,9 @@ export default function AlertsPage() {
                               • ${alert.minPrice || 0} - ${alert.maxPrice || '∞'}
                             </span>
                           )}
+                          <span className="text-muted-foreground/70 text-xs">
+                            • {getRelativeTime(alert.createdAt)}
+                          </span>
                         </div>
                         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 mb-3">
                           <p className="text-sm text-amber-900 dark:text-amber-100 font-medium mb-1">

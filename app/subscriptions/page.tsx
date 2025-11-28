@@ -1,21 +1,21 @@
 "use client";
 
 import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
-import { SubscriptionOverview } from "@/components/subscriptions/subscription-overview";
+import { SubscriptionDashboard } from "@/components/subscriptions/subscription-dashboard";
 
 export default function SubscriptionsPage() {
   return (
     <DashboardLayout>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Subscription</h1>
         <p className="text-muted-foreground mt-1.5">
-          Manage your notification frequency plans
+          Manage your plan and notification preferences
         </p>
       </div>
 
-      {/* Subscription Overview */}
-      <SubscriptionOverview />
+      {/* Subscription Dashboard */}
+      <SubscriptionDashboard />
     </DashboardLayout>
   );
 }

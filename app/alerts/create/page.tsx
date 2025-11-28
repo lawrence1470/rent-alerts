@@ -5,7 +5,8 @@ import { Button } from "@mantine/core";
 import { StatefulButton, useStatefulButton } from "@/components/ui/stateful-button";
 import { StepOne } from "@/components/alerts/steps/step-one";
 import { StepTwo } from "@/components/alerts/steps/step-two";
-import { StepFour } from "@/components/alerts/steps/step-four";
+import { StepNotificationMethods } from "@/components/alerts/steps/step-notification-methods";
+import { StepFourFrequency } from "@/components/alerts/steps/step-four-frequency";
 import { StepSix } from "@/components/alerts/steps/step-six";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -39,7 +40,7 @@ export default function CreateAlertPage() {
     notifyOnlyNewApartments: true,
   });
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Check if user needs to provide phone number
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function CreateAlertPage() {
         try {
           const parsedData = JSON.parse(pendingAlert);
           setFormData(parsedData);
-          setStep(4);
+          setStep(5);
           localStorage.removeItem(PENDING_ALERT_KEY);
 
           toast.info("Welcome back!", {
@@ -174,9 +175,11 @@ export default function CreateAlertPage() {
     if (step === 1) return formData.name.trim().length > 0;
     if (step === 2) return formData.areas.length > 0;
     if (step === 3) {
+      // Notification methods step - need at least one method
       const hasNotificationMethod = formData.enablePhoneNotifications || formData.enableEmailNotifications;
       if (!hasNotificationMethod) return false;
 
+      // If phone notifications enabled and user has no phone, validate phone input
       if (formData.enablePhoneNotifications && !user?.primaryPhoneNumber && !user?.phoneNumbers?.length) {
         if (phoneNumber.trim().length === 0) return false;
         const digits = phoneNumber.replace(/\D/g, "");
@@ -185,7 +188,8 @@ export default function CreateAlertPage() {
 
       return true;
     }
-    if (step === 4) return true;
+    if (step === 4) return true; // Frequency step - always has a default selection
+    if (step === 5) return true; // Review step
     return true;
   };
 
@@ -232,7 +236,7 @@ export default function CreateAlertPage() {
             <StepTwo formData={formData} updateFormData={updateFormData} />
           )}
           {step === 3 && (
-            <StepFour
+            <StepNotificationMethods
               formData={formData}
               updateFormData={updateFormData}
               userHasPhone={!needsPhone}
@@ -241,6 +245,9 @@ export default function CreateAlertPage() {
             />
           )}
           {step === 4 && (
+            <StepFourFrequency formData={formData} updateFormData={updateFormData} />
+          )}
+          {step === 5 && (
             <StepSix formData={formData} updateFormData={updateFormData} />
           )}
         </div>

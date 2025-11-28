@@ -10,9 +10,36 @@ import { Accordion } from "@mantine/core";
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, HelpCircle, Shield, CreditCard, Bell, Zap, Sparkles } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Shield, CreditCard, Bell, Zap, Sparkles, Rocket, Clock } from 'lucide-react';
 
 const FAQ_CATEGORIES = [
+  {
+    category: 'How It Works',
+    icon: Rocket,
+    color: 'bg-primary/10 text-primary',
+    questions: [
+      {
+        question: 'How does Rent Notifications work?',
+        answer: 'Rent Notifications monitors StreetEasy for new rental listings that match your saved search criteria. When a new listing appears, we notify you via email (and SMS if enabled) so you can act fast. You create alerts with your preferred neighborhoods, price range, and bedroom count, and we handle the rest.',
+      },
+      {
+        question: 'What are the different plans?',
+        answer: 'We offer three notification speeds: Hourly Checks + SMS ($5/week) checks every hour and includes text message notifications. 30-Minute Checks ($15/week) checks twice as often for faster alerts. 15-Minute Checks ($20/week) is our fastest option, checking 4 times per hour to catch listings the moment they appear.',
+      },
+      {
+        question: 'How does the notification cadence work?',
+        answer: 'All users on the same plan are checked on the same schedule. For example, 15-minute plan users are all checked at :00, :15, :30, and :45 past each hour. This means everyone on the same tier has an equal chance at new listings - no one gets an unfair advantage within their tier.',
+      },
+      {
+        question: 'Why is speed important in NYC rentals?',
+        answer: 'The NYC rental market is extremely competitive. Desirable apartments can receive dozens of applications within hours of being listed. Being among the first to see a new listing gives you a significant advantage - you can schedule tours and submit applications before the competition.',
+      },
+      {
+        question: 'What happens when I create an alert?',
+        answer: 'Your alert joins the next scheduled check for your tier. We search StreetEasy for listings matching your criteria, compare against what you\'ve already seen, and send notifications only for new listings. This prevents duplicate alerts and ensures you only hear about fresh opportunities.',
+      },
+    ],
+  },
   {
     category: 'Billing & Payment',
     icon: CreditCard,

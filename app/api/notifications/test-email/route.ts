@@ -112,7 +112,6 @@ export async function POST(request: NextRequest) {
         enablePhoneNotifications: true,
         enableEmailNotifications: true,
         preferredFrequency: '1hour' as const,
-        notifyOnlyNewApartments: false,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),

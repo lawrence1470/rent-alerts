@@ -6,7 +6,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { stripe, calculatePrice, getTierConfig, type TierId } from '@/lib/stripe-config';
+import { stripe, getTierConfig, calculatePriceWithDiscount, type TierId } from '@/lib/stripe-config';
 import { db } from '@/lib/db';
 import { purchases } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
@@ -33,9 +33,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (weeks < 1 || weeks > 6) {
+    if (weeks < 1 || weeks > 52) {
       return NextResponse.json(
-        { error: 'Weeks must be between 1 and 6' },
+        { error: 'Weeks must be between 1 and 52' },
         { status: 400 }
       );
     }
@@ -50,8 +50,11 @@ export async function POST(request: Request) {
     // Get tier configuration
     const tierConfig = getTierConfig(tierId);
 
-    // Calculate total amount
-    const totalAmount = calculatePrice(tierId, weeks);
+    // Calculate total amount with tiered discount
+    const { total: totalAmount, discountPercent } = calculatePriceWithDiscount(
+      tierConfig.pricePerWeek,
+      weeks
+    );
 
     if (totalAmount === 0) {
       return NextResponse.json(
@@ -80,9 +83,11 @@ export async function POST(request: Request) {
       tierId,
       weeks,
       totalAmount: (totalAmount / 100).toFixed(2),
+      discountPercent,
       tierName: tierConfig.name,
     });
 
+    const discountText = discountPercent > 0 ? ` (${discountPercent}% discount applied)` : '';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -91,7 +96,7 @@ export async function POST(request: Request) {
             currency: 'usd',
             product_data: {
               name: `${tierConfig.name} - ${weeks} week${weeks > 1 ? 's' : ''}`,
-              description: `${tierConfig.checksPerDay} checks per day (every ${tierConfig.interval})`,
+              description: `${tierConfig.checksPerDay} checks per day (every ${tierConfig.interval})${discountText}`,
             },
             unit_amount: totalAmount,
           },
