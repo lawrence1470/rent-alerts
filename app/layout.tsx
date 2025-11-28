@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "@/components/ui/sonner";
+import { Providers, ColorSchemeScript } from "@/components/providers";
 import { Navbar } from "@/components/dashboard/navbar";
+import { UpgradeBanner } from "@/components/dashboard/upgrade-banner";
+
+// Mantine styles
+import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
+import "@mantine/dates/styles.css";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -87,13 +94,18 @@ export default function RootLayout({
         cssLayerName: 'clerk' // Required for Tailwind 4 compatibility
       }}
     >
-      <html lang="en" className="dark">
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <ColorSchemeScript defaultColorScheme="dark" />
+        </head>
         <body
           className={`${inter.variable} antialiased font-sans`}
         >
-          <Navbar />
-          {children}
-          <Toaster />
+          <Providers>
+            <UpgradeBanner />
+            <Navbar />
+            {children}
+          </Providers>
         </body>
       </html>
     </ClerkProvider>

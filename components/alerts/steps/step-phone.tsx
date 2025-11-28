@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import { TextInput } from "@mantine/core";
 import { Label } from "@/components/ui/label";
 import { Phone } from "lucide-react";
 
@@ -56,17 +56,14 @@ export function StepPhone({ phoneNumber, onPhoneChange }: StepPhoneProps) {
         <Label htmlFor="phone">
           Phone Number <span className="text-xs text-muted-foreground font-normal">(Optional)</span>
         </Label>
-        <Input
+        <TextInput
           id="phone"
           type="tel"
           placeholder="(555) 123-4567"
           value={phoneNumber}
           onChange={handleChange}
-          className={error ? "border-destructive" : ""}
+          error={error || undefined}
         />
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
         <p className="text-xs text-muted-foreground">
           Standard text messaging rates may apply
         </p>

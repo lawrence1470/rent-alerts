@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Badge, TextInput } from "@mantine/core";
 import { cn } from "@/lib/utils";
 import {
   searchNeighborhoods,
@@ -130,19 +129,22 @@ export function AreaAutocomplete({
           {selectedNeighborhoods.map((neighborhood) => (
             <Badge
               key={neighborhood.value}
-              variant="secondary"
+              color="violet"
+              variant="light"
               className="gap-1 pr-1"
+              rightSection={
+                <button
+                  type="button"
+                  onClick={() => removeArea(neighborhood.value)}
+                  disabled={disabled}
+                  className="ml-1 rounded-sm hover:bg-muted-foreground/20 focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                  aria-label={`Remove ${neighborhood.label}`}
+                >
+                  <X className="size-3" />
+                </button>
+              }
             >
               {neighborhood.label}
-              <button
-                type="button"
-                onClick={() => removeArea(neighborhood.value)}
-                disabled={disabled}
-                className="ml-1 rounded-sm hover:bg-muted-foreground/20 focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                aria-label={`Remove ${neighborhood.label}`}
-              >
-                <X className="size-3" />
-              </button>
             </Badge>
           ))}
         </div>
@@ -150,7 +152,7 @@ export function AreaAutocomplete({
 
       {/* Search input */}
       <div className="relative">
-        <Input
+        <TextInput
           ref={inputRef}
           type="text"
           placeholder={
@@ -163,6 +165,7 @@ export function AreaAutocomplete({
           onKeyDown={handleKeyDown}
           onFocus={() => inputValue && setShowSuggestions(true)}
           disabled={disabled}
+          error={error}
           aria-invalid={!!error}
           aria-describedby={error ? "area-error" : undefined}
         />
@@ -204,13 +207,6 @@ export function AreaAutocomplete({
           </div>
         )}
       </div>
-
-      {/* Error message */}
-      {error && (
-        <p id="area-error" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
 
       {/* Helper text */}
       {!error && selectedAreas.length === 0 && (

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button, Badge, ActionIcon } from "@mantine/core";
 import { Logo } from "@/components/logo";
+import { useState, useEffect } from "react";
 import {
   Home,
   Search,
@@ -14,6 +14,7 @@ import {
   User,
   X,
   Plus,
+  CreditCard,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -28,29 +29,69 @@ const navigationItems = [
     href: "/dashboard",
     icon: Home,
     badge: null,
+    badgeType: null,
   },
   {
     name: "My Alerts",
     href: "/dashboard/alerts",
     icon: Search,
     badge: null,
+    badgeType: null,
   },
   {
     name: "Notifications",
     href: "/dashboard/notifications",
     icon: Bell,
     badge: 3,
+    badgeType: "count",
+  },
+  {
+    name: "Subscriptions",
+    href: "/subscriptions",
+    icon: CreditCard,
+    badge: null,
+    badgeType: "upgrade",
   },
   {
     name: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
     badge: null,
+    badgeType: null,
   },
 ];
 
+interface AccessPeriod {
+  tierId: string;
+  tierName: string;
+  expiresAt: string;
+  status: string;
+}
+
 export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
+  const [hasPremium, setHasPremium] = useState<boolean>(true);
+
+  useEffect(() => {
+    checkPremiumStatus();
+  }, []);
+
+  async function checkPremiumStatus() {
+    try {
+      const response = await fetch('/api/user/access');
+      if (response.ok) {
+        const data = await response.json();
+        const accessPeriods: AccessPeriod[] = data.accessPeriods || [];
+        const hasPaid = accessPeriods.some(period => period.tierId !== '1hour');
+        setHasPremium(hasPaid);
+      } else {
+        setHasPremium(false);
+      }
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+      setHasPremium(false);
+    }
+  }
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
@@ -58,29 +99,29 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
         <Logo href="/dashboard" showText size="sm" />
         {isMobile && (
-          <Button
-            variant="ghost"
-            size="icon"
+          <ActionIcon
+            variant="subtle"
             onClick={onClose}
             aria-label="Close sidebar"
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
+            color="gray"
+            size="lg"
           >
             <X className="h-5 w-5" />
-          </Button>
+          </ActionIcon>
         )}
       </div>
 
       {/* Create Alert Button */}
       <div className="border-b border-sidebar-border px-3 py-4">
         <Button
-          asChild
+          component={Link}
+          href="/dashboard/alerts/new"
+          onClick={isMobile ? onClose : undefined}
           className="w-full justify-start gap-2"
-          size="default"
+          size="md"
+          leftSection={<Plus className="h-5 w-5" />}
         >
-          <Link href="/dashboard/alerts/new" onClick={isMobile ? onClose : undefined}>
-            <Plus className="h-5 w-5" />
-            Create Alert
-          </Link>
+          Create Alert
         </Button>
       </div>
 
@@ -89,6 +130,8 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
         {navigationItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
+          const showUpgradeBadge = item.badgeType === "upgrade" && !hasPremium;
+          const showCountBadge = item.badgeType === "count" && item.badge !== null && item.badge > 0;
 
           return (
             <Link
@@ -107,10 +150,19 @@ export function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarPro
             >
               <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
               <span className="flex-1">{item.name}</span>
-              {item.badge !== null && item.badge > 0 && (
+              {showUpgradeBadge && (
                 <Badge
-                  variant="secondary"
-                  className="h-5 min-w-5 px-1.5 text-xs"
+                  variant="filled"
+                  color="violet"
+                  size="sm"
+                >
+                  Upgrade
+                </Badge>
+              )}
+              {showCountBadge && (
+                <Badge
+                  color="violet"
+                  size="sm"
                   aria-label={`${item.badge} new ${item.name.toLowerCase()}`}
                 >
                   {item.badge}

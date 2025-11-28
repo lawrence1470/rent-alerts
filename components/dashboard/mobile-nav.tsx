@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ActionIcon } from "@mantine/core";
 import { Logo } from "@/components/logo";
 import { Menu } from "lucide-react";
 
@@ -11,17 +11,17 @@ interface MobileNavProps {
 export function MobileNav({ onMenuClick }: MobileNavProps) {
   return (
     <div className="flex h-16 items-center justify-between border-b border-border bg-background px-4 md:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
+      <ActionIcon
+        variant="subtle"
+        size="lg"
         onClick={onMenuClick}
         aria-label="Open navigation menu"
         aria-expanded="false"
         aria-controls="mobile-sidebar"
-        className="text-foreground hover:bg-accent"
+        color="gray"
       >
         <Menu className="h-6 w-6" />
-      </Button>
+      </ActionIcon>
 
       <Logo href="/dashboard" showText size="sm" />
 

@@ -59,16 +59,16 @@ export const alertFormSchema = z.object({
     .optional(),
 
   // Boolean filters
-  noFee: z.boolean().default(false),
-  filterRentStabilized: z.boolean().default(false),
+  noFee: z.boolean(),
+  filterRentStabilized: z.boolean(),
 
   // Notification preferences
-  enablePhoneNotifications: z.boolean().default(true),
-  enableEmailNotifications: z.boolean().default(true),
-  notifyOnlyNewApartments: z.boolean().default(true),
+  enablePhoneNotifications: z.boolean(),
+  enableEmailNotifications: z.boolean(),
+  notifyOnlyNewApartments: z.boolean(),
 
   // Status
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 }).refine(
   (data) => {
     // Validate price range: minPrice <= maxPrice
@@ -112,7 +112,7 @@ export type AlertFormValues = z.infer<typeof alertFormSchema>;
 /**
  * Default values for new alert form
  */
-export const defaultAlertValues: Partial<AlertFormValues> = {
+export const defaultAlertValues: AlertFormValues = {
   name: "",
   areas: "",
   minPrice: null,

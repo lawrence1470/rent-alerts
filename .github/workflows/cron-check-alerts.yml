@@ -15,14 +15,16 @@ jobs:
         run: |
           curl -X GET "https://rentnotify.com/api/cron/check-alerts" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -f || echo "Production cron failed"
+            -f -v
 
   check-alerts-preview:
     name: Check Alerts (Preview)
     runs-on: ubuntu-latest
+    # Only run if preview URL is configured
+    if: vars.PREVIEW_URL != ''
     steps:
       - name: Call preview cron endpoint
         run: |
-          curl -X GET "https://rent-alerts.vercel.app/api/cron/check-alerts" \
+          curl -X GET "${{ vars.PREVIEW_URL }}/api/cron/check-alerts" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -f || echo "Preview cron failed"
+            -f -v || echo "Preview cron failed - this is expected if preview deployment doesn't exist"

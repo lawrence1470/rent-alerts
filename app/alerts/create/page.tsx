@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mantine/core";
 import { StatefulButton, useStatefulButton } from "@/components/ui/stateful-button";
 import { StepOne } from "@/components/alerts/steps/step-one";
 import { StepTwo } from "@/components/alerts/steps/step-two";
-import { StepThree } from "@/components/alerts/steps/step-three";
-import { StepFourFrequency } from "@/components/alerts/steps/step-four-frequency";
-import { StepFive } from "@/components/alerts/steps/step-five";
+import { StepFour } from "@/components/alerts/steps/step-four";
+import { StepSix } from "@/components/alerts/steps/step-six";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AlertCircle, ArrowLeft, LogIn } from "lucide-react";
@@ -37,9 +36,10 @@ export default function CreateAlertPage() {
     preferredFrequency: "1hour",
     enablePhoneNotifications: true,
     enableEmailNotifications: true,
+    notifyOnlyNewApartments: true,
   });
 
-  const totalSteps = 5;
+  const totalSteps = 4;
 
   // Check if user needs to provide phone number
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function CreateAlertPage() {
         try {
           const parsedData = JSON.parse(pendingAlert);
           setFormData(parsedData);
-          setStep(5);
+          setStep(4);
           localStorage.removeItem(PENDING_ALERT_KEY);
 
           toast.info("Welcome back!", {
@@ -173,9 +173,7 @@ export default function CreateAlertPage() {
   const canGoNext = () => {
     if (step === 1) return formData.name.trim().length > 0;
     if (step === 2) return formData.areas.length > 0;
-    if (step === 3) return true;
-    if (step === 4) return true;
-    if (step === 5) {
+    if (step === 3) {
       const hasNotificationMethod = formData.enablePhoneNotifications || formData.enableEmailNotifications;
       if (!hasNotificationMethod) return false;
 
@@ -187,6 +185,7 @@ export default function CreateAlertPage() {
 
       return true;
     }
+    if (step === 4) return true;
     return true;
   };
 
@@ -225,7 +224,7 @@ export default function CreateAlertPage() {
         </div>
 
         {/* Step Content */}
-        <div className="bg-card border rounded-lg p-6 mb-6 min-h-[400px]">
+        <div className="bg-card border rounded-lg p-6 mb-6 min-h-[300px]">
           {step === 1 && (
             <StepOne formData={formData} updateFormData={updateFormData} />
           )}
@@ -233,19 +232,16 @@ export default function CreateAlertPage() {
             <StepTwo formData={formData} updateFormData={updateFormData} />
           )}
           {step === 3 && (
-            <StepThree formData={formData} updateFormData={updateFormData} />
-          )}
-          {step === 4 && (
-            <StepFourFrequency formData={formData} updateFormData={updateFormData} />
-          )}
-          {step === 5 && (
-            <StepFive
+            <StepFour
               formData={formData}
               updateFormData={updateFormData}
               userHasPhone={!needsPhone}
               phoneNumber={phoneNumber}
               onPhoneChange={setPhoneNumber}
             />
+          )}
+          {step === 4 && (
+            <StepSix formData={formData} updateFormData={updateFormData} />
           )}
         </div>
       </div>

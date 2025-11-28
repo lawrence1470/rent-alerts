@@ -1,31 +1,34 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as SwitchPrimitive from "@radix-ui/react-switch"
+import * as React from "react";
+import { Switch as MantineSwitch, SwitchProps as MantineSwitchProps } from "@mantine/core";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
+export interface SwitchProps extends Omit<MantineSwitchProps, "classNames"> {
+  className?: string;
+  onCheckedChange?: (checked: boolean) => void;
+}
 
 function Switch({
   className,
+  checked,
+  onCheckedChange,
+  onChange,
   ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root>) {
+}: SwitchProps) {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onChange?.(event);
+    onCheckedChange?.(event.target.checked);
+  };
+
   return (
-    <SwitchPrimitive.Root
-      data-slot="switch"
-      className={cn(
-        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
+    <MantineSwitch
+      checked={checked}
+      onChange={handleChange}
+      className={cn(className)}
       {...props}
-    >
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className={cn(
-          "bg-background dark:data-[state=unchecked]:bg-foreground dark:data-[state=checked]:bg-primary-foreground pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0"
-        )}
-      />
-    </SwitchPrimitive.Root>
-  )
+    />
+  );
 }
 
-export { Switch }
+export { Switch };

@@ -22,6 +22,13 @@
       "when": 1762636769140,
       "tag": "0002_volatile_christian_walker",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763257888955,
+      "tag": "0003_soft_kronos",
+      "breakpoints": true
     }
   ]
 }

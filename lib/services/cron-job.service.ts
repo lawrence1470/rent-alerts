@@ -6,7 +6,7 @@
  */
 
 import { db } from '../db';
-import { alerts, alertBatches, cronJobLogs } from '../schema';
+import { alerts, alertBatches, cronJobLogs, alertRuns } from '../schema';
 import { eq } from 'drizzle-orm';
 import { getActiveBatches, listingMatchesAlert } from './alert-batching.service';
 import { getStreetEasyClient } from './streeteasy-api.service';
@@ -31,6 +31,7 @@ function shouldCheckAlert(alert: any): boolean {
     '15min': 15,
     '30min': 30,
     '1hour': 60,
+    '1hour-sms': 60,
   }[alert.preferredFrequency as TierId] || 60;
 
   // Calculate if current time is a scheduled window for this frequency
@@ -116,88 +117,206 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
         for (const alert of allBatchAlerts) {
           if (!alert || !alert.isActive) continue;
 
-          // Check if this alert should be checked based on its frequency
-          if (!shouldCheckAlert(alert)) {
-            console.log(`Alert ${alert.name}: Skipping (not time yet for ${alert.preferredFrequency} checks)`);
-            continue;
-          }
+          // Track execution time for this alert
+          const alertStartTime = Date.now();
 
-          // Check if user has access to use this tier
-          const preferredTier = alert.preferredFrequency as TierId;
-          const { canUse, reason } = await canUseTierForAlert(alert.userId, preferredTier);
+          try {
+            // Check if this alert should be checked based on its frequency
+            if (!shouldCheckAlert(alert)) {
+              console.log(`Alert ${alert.name}: Skipping (not time yet for ${alert.preferredFrequency} checks)`);
 
-          if (!canUse) {
-            console.log(`Alert ${alert.name}: User lacks access to ${preferredTier} tier - ${reason}`);
-            // Fall back to free tier (1hour) if user doesn't have access
-            if (preferredTier !== '1hour') {
-              // Only check if it's time for hourly checks
-              const hourlyLastChecked = alert.lastChecked ? new Date(alert.lastChecked) : null;
-              const hoursSinceLastCheck = hourlyLastChecked
-                ? (Date.now() - hourlyLastChecked.getTime()) / (1000 * 60 * 60)
-                : 999;
+              // Record skipped run
+              await db.insert(alertRuns).values({
+                alertId: alert.id,
+                batchId: batch.dbId,
+                executedAt: new Date(),
+                executionTimeMs: Date.now() - alertStartTime,
+                totalListingsFromBatch: apiListings.length,
+                matchingListings: 0,
+                newListings: 0,
+                duplicateListings: 0,
+                notificationsSent: 0,
+                status: 'skipped',
+                skipReason: 'not_scheduled_window',
+              });
 
-              if (hoursSinceLastCheck < 1) {
-                console.log(`Alert ${alert.name}: Falling back to free tier (1hour) - not time yet`);
-                continue;
-              }
-
-              console.log(`Alert ${alert.name}: Using free tier (1hour) fallback`);
+              continue;
             }
-          }
 
-          // Filter listings that match this specific alert's criteria
-          const matchingListings = dbListings.filter(listing =>
-            listingMatchesAlert(listing, alert)
-          );
+            // Check if user has access to use this tier
+            const preferredTier = alert.preferredFrequency as TierId;
+            const { canUse, reason } = await canUseTierForAlert(alert.userId, preferredTier);
 
-          if (matchingListings.length === 0) continue;
+            if (!canUse) {
+              console.log(`Alert ${alert.name}: User lacks access to ${preferredTier} tier - ${reason}`);
+              // Fall back to free tier (1hour) if user doesn't have access
+              if (preferredTier !== '1hour') {
+                // Only check if it's time for hourly checks
+                const hourlyLastChecked = alert.lastChecked ? new Date(alert.lastChecked) : null;
+                const hoursSinceLastCheck = hourlyLastChecked
+                  ? (Date.now() - hourlyLastChecked.getTime()) / (1000 * 60 * 60)
+                  : 999;
 
-          // Get listings this user hasn't seen yet
-          const { filterNewListings } = await import('./listing-deduplication.service');
-          const newListings = await filterNewListings(alert.userId, alert.id, matchingListings);
+                if (hoursSinceLastCheck < 1) {
+                  console.log(`Alert ${alert.name}: Falling back to free tier (1hour) - not time yet`);
 
-          // Check if we should send notifications based on user preference
-          const shouldNotify = !alert.notifyOnlyNewApartments || newListings.length > 0;
+                  // Record skipped run
+                  await db.insert(alertRuns).values({
+                    alertId: alert.id,
+                    batchId: batch.dbId,
+                    executedAt: new Date(),
+                    executionTimeMs: Date.now() - alertStartTime,
+                    totalListingsFromBatch: apiListings.length,
+                    matchingListings: 0,
+                    newListings: 0,
+                    duplicateListings: 0,
+                    notificationsSent: 0,
+                    status: 'skipped',
+                    skipReason: 'no_tier_access',
+                  });
 
-          if (!shouldNotify) {
-            console.log(`Alert ${alert.name}: No new listings, skipping notification (user preference)`);
+                  continue;
+                }
+
+                console.log(`Alert ${alert.name}: Using free tier (1hour) fallback`);
+              }
+            }
+
+            // Filter listings that match this specific alert's criteria
+            const matchingListings = dbListings.filter(listing =>
+              listingMatchesAlert(listing, alert)
+            );
+
+            if (matchingListings.length === 0) {
+              // Record run with no matches
+              await db.insert(alertRuns).values({
+                alertId: alert.id,
+                batchId: batch.dbId,
+                executedAt: new Date(),
+                executionTimeMs: Date.now() - alertStartTime,
+                totalListingsFromBatch: apiListings.length,
+                matchingListings: 0,
+                newListings: 0,
+                duplicateListings: 0,
+                notificationsSent: 0,
+                status: 'success',
+              });
+
+              // Update alert's lastChecked timestamp
+              await db.update(alerts)
+                .set({ lastChecked: new Date() })
+                .where(eq(alerts.id, alert.id));
+
+              continue;
+            }
+
+            // Get listings this user hasn't seen yet
+            const { filterNewListings } = await import('./listing-deduplication.service');
+            const newListings = await filterNewListings(alert.userId, alert.id, matchingListings);
+            const duplicateListings = matchingListings.length - newListings.length;
+
+            // Check if we should send notifications based on user preference
+            const shouldNotify = !alert.notifyOnlyNewApartments || newListings.length > 0;
+
+            if (!shouldNotify) {
+              console.log(`Alert ${alert.name}: No new listings, skipping notification (user preference)`);
+
+              // Record run with duplicates only
+              await db.insert(alertRuns).values({
+                alertId: alert.id,
+                batchId: batch.dbId,
+                executedAt: new Date(),
+                executionTimeMs: Date.now() - alertStartTime,
+                totalListingsFromBatch: apiListings.length,
+                matchingListings: matchingListings.length,
+                newListings: 0,
+                duplicateListings: duplicateListings,
+                notificationsSent: 0,
+                status: 'skipped',
+                skipReason: 'no_new_listings',
+              });
+
+              // Update alert's lastChecked timestamp
+              await db.update(alerts)
+                .set({ lastChecked: new Date() })
+                .where(eq(alerts.id, alert.id));
+
+              continue;
+            }
+
+            if (newListings.length === 0) {
+              console.log(`Alert ${alert.name}: No new listings, but user wants all notifications`);
+            } else {
+              console.log(`Alert ${alert.name}: ${newListings.length} new listings`);
+            }
+
+            totalNewListings += newListings.length;
+
+            // Get user's notification preferences based on alert settings
+            const channels = await getUserNotificationChannels(alert);
+
+            // Create notifications for each channel
+            // Pass all matchingListings if user wants notifications even without new ones
+            const listingsToNotify = newListings.length > 0 ? newListings : matchingListings;
+            let notificationsSent = 0;
+
+            for (const channel of channels) {
+              const notifications = await generateNotificationsForAlert(
+                alert,
+                listingsToNotify,
+                channel
+              );
+              notificationsSent += notifications.length;
+              totalNotifications += notifications.length;
+            }
+
+            // Mark listings as seen
+            await markListingsAsSeen(
+              alert.userId,
+              alert.id,
+              newListings.map(l => l.id)
+            );
+
+            // Update alert's lastChecked timestamp
+            await db.update(alerts)
+              .set({ lastChecked: new Date() })
+              .where(eq(alerts.id, alert.id));
+
+            // Record successful run with all metrics
+            await db.insert(alertRuns).values({
+              alertId: alert.id,
+              batchId: batch.dbId,
+              executedAt: new Date(),
+              executionTimeMs: Date.now() - alertStartTime,
+              totalListingsFromBatch: apiListings.length,
+              matchingListings: matchingListings.length,
+              newListings: newListings.length,
+              duplicateListings: duplicateListings,
+              notificationsSent: notificationsSent,
+              status: 'success',
+            });
+
+          } catch (error) {
+            // Record failed run
+            console.error(`Error processing alert ${alert.name}:`, error);
+
+            await db.insert(alertRuns).values({
+              alertId: alert.id,
+              batchId: batch.dbId,
+              executedAt: new Date(),
+              executionTimeMs: Date.now() - alertStartTime,
+              totalListingsFromBatch: apiListings.length,
+              matchingListings: 0,
+              newListings: 0,
+              duplicateListings: 0,
+              notificationsSent: 0,
+              status: 'failed',
+              errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            });
+
+            // Continue with next alert even if this one fails
             continue;
           }
-
-          if (newListings.length === 0) {
-            console.log(`Alert ${alert.name}: No new listings, but user wants all notifications`);
-          } else {
-            console.log(`Alert ${alert.name}: ${newListings.length} new listings`);
-          }
-
-          totalNewListings += newListings.length;
-
-          // Get user's notification preferences based on alert settings
-          const channels = await getUserNotificationChannels(alert);
-
-          // Create notifications for each channel
-          // Pass all matchingListings if user wants notifications even without new ones
-          const listingsToNotify = newListings.length > 0 ? newListings : matchingListings;
-          for (const channel of channels) {
-            const notifications = await generateNotificationsForAlert(
-              alert,
-              listingsToNotify,
-              channel
-            );
-            totalNotifications += notifications.length;
-          }
-
-          // Mark listings as seen
-          await markListingsAsSeen(
-            alert.userId,
-            alert.id,
-            newListings.map(l => l.id)
-          );
-
-          // Update alert's lastChecked timestamp
-          await db.update(alerts)
-            .set({ lastChecked: new Date() })
-            .where(eq(alerts.id, alert.id));
         }
 
         // Update batch's lastFetched timestamp

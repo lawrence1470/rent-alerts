@@ -1,37 +1,55 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Sparkles, TrendingUp, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { Button, ActionIcon, Paper } from "@mantine/core";
+import { Sparkles, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 
 const BANNER_DISMISSED_KEY = 'upgrade-banner-dismissed';
 
+interface AccessPeriod {
+  tierId: string;
+  tierName: string;
+  expiresAt: string;
+  status: string;
+}
+
 export function UpgradeBanner() {
+  const pathname = usePathname();
   const [hasPremium, setHasPremium] = useState<boolean | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Routes where the banner should not appear
+  const excludedRoutes = ['/pricing', '/subscriptions', '/sign-in', '/sign-up'];
 
   useEffect(() => {
-    checkPremiumStatus();
+    setMounted(true);
     checkDismissedState();
+    checkPremiumStatus();
   }, []);
 
   async function checkPremiumStatus() {
     try {
       const response = await fetch('/api/user/access');
+
       if (response.ok) {
         const data = await response.json();
-        // Check if user has any paid subscriptions (not just free tier)
-        const hasPaid = data.subscriptions.some(
-          (sub: any) => sub.tierId !== '1hour'
-        );
+        const accessPeriods: AccessPeriod[] = data.accessPeriods || [];
+        // Check if user has any paid tiers (not just free tier)
+        const hasPaid = accessPeriods.some(period => period.tierId !== '1hour');
         setHasPremium(hasPaid);
+      } else if (response.status === 401) {
+        // User not signed in, treat as free tier
+        setHasPremium(false);
       }
     } catch (error) {
-      console.error('Error checking premium status:', error);
+      console.error('[UpgradeBanner] Error checking premium status:', error);
+      // On error, assume free tier to show banner
+      setHasPremium(false);
     } finally {
       setLoading(false);
     }
@@ -39,61 +57,75 @@ export function UpgradeBanner() {
 
   function checkDismissedState() {
     const dismissed = localStorage.getItem(BANNER_DISMISSED_KEY);
-    if (dismissed === 'true') {
-      setDismissed(true);
+    if (dismissed !== 'true') {
+      setShow(true);
     }
   }
 
   function handleDismiss() {
-    setDismissed(true);
+    setShow(false);
     localStorage.setItem(BANNER_DISMISSED_KEY, 'true');
   }
 
-  // Don't render if loading, has premium, or dismissed
-  if (loading || hasPremium || dismissed) {
+  // Don't render until mounted (prevents hydration mismatch)
+  // or if on excluded routes (pricing, subscriptions, auth pages)
+  if (!mounted || loading || hasPremium || excludedRoutes.includes(pathname)) {
     return null;
   }
 
   return (
-    <Card className="mb-6 overflow-hidden border-blue-500/20 bg-gradient-to-r from-blue-500/10 to-indigo-500/10">
-      <div className="relative p-4 flex items-center gap-4">
-        {/* Icon */}
-        <div className="hidden sm:flex shrink-0 p-2 rounded-lg bg-blue-500/10">
-          <Sparkles className="h-5 w-5 text-blue-500" />
-        </div>
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-2xl"
+        >
+          <Paper shadow="xl" radius="lg" p="md" withBorder className="bg-card">
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: Icon + Text */}
+              <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+                <div className="flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base md:text-lg font-semibold text-foreground">
+                    Upgrade to Premium
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Get faster notifications and SMS alerts
+                  </p>
+                </div>
+              </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm mb-1">
-            Upgrade for Faster Notifications
-          </h3>
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            Premium plans check for new apartments every 15-30 minutes, giving you a competitive
-            advantage in NYC's fast-moving rental market.
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Link href="/pricing">
-            <Button size="sm" className="whitespace-nowrap">
-              <TrendingUp className="h-3 w-3 mr-1.5" />
-              Upgrade
-            </Button>
-          </Link>
-
-          {/* Dismiss Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDismiss}
-            className="h-8 w-8 p-0"
-            aria-label="Dismiss banner"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </Card>
+              {/* Right: CTA + Close */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  component={Link}
+                  href="/subscriptions"
+                  size="sm"
+                  radius="xl"
+                  rightSection={<ArrowRight className="h-3.5 w-3.5" />}
+                >
+                  <span className="hidden sm:inline">Upgrade Now</span>
+                  <span className="sm:hidden">Upgrade</span>
+                </Button>
+                <ActionIcon
+                  onClick={handleDismiss}
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  aria-label="Dismiss upgrade banner"
+                >
+                  <X className="h-5 w-5" />
+                </ActionIcon>
+              </div>
+            </div>
+          </Paper>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

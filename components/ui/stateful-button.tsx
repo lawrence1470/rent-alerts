@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Button, ButtonProps } from "@/components/ui/button";
+import { Button, ButtonProps } from "@mantine/core";
 import { cn } from "@/lib/utils";
 import { Loader2, Check, X } from "lucide-react";
 
@@ -13,6 +13,7 @@ export interface StatefulButtonProps extends Omit<ButtonProps, "children"> {
   state?: "idle" | "loading" | "success" | "error";
   showIcon?: boolean;
   autoResetDelay?: number; // Auto reset to idle after success/error (in ms)
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 export function StatefulButton({
@@ -71,31 +72,23 @@ export function StatefulButton({
     }
   };
 
-  const getButtonVariant = (): ButtonProps["variant"] => {
-    if (variant) return variant;
+  const getButtonColor = () => {
     switch (currentState) {
       case "success":
-        return "default";
+        return "green";
       case "error":
-        return "destructive";
+        return "red";
       default:
-        return "default";
+        return undefined;
     }
-  };
-
-  const getButtonClassName = () => {
-    return cn(
-      className,
-      currentState === "success" && "bg-green-600 hover:bg-green-700 text-white",
-      "transition-all duration-200"
-    );
   };
 
   return (
     <Button
       disabled={disabled || currentState === "loading"}
-      variant={getButtonVariant()}
-      className={getButtonClassName()}
+      variant={variant || "filled"}
+      color={getButtonColor()}
+      className={cn(className, "transition-all duration-200")}
       {...props}
     >
       {getButtonContent()}

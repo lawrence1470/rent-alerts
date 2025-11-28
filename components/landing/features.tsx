@@ -1,5 +1,7 @@
+"use client";
+
 import { Bell, Filter, Heart, MapPin, TrendingUp, Zap } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Paper, Title, Text } from "@mantine/core";
 
 const features = [
   {
@@ -53,19 +55,23 @@ export function Features() {
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="border-border/40 transition-all hover:border-primary/50 hover:shadow-lg">
-                <CardHeader>
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Paper
+                key={index}
+                p="lg"
+                radius="lg"
+                withBorder
+                className="border-border/40 transition-all hover:border-primary/50 hover:shadow-lg"
+              >
+                <div className="flex flex-col items-start gap-3 mb-4">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon className="h-6 w-6" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
+                  <Title order={3} className="text-xl font-semibold">{feature.title}</Title>
+                </div>
+                <Text size="md" c="dimmed" className="leading-relaxed">
+                  {feature.description}
+                </Text>
+              </Paper>
             );
           })}
         </div>

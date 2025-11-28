@@ -1,37 +1,65 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+import * as React from "react";
+import { Tooltip as MantineTooltip, TooltipProps as MantineTooltipProps } from "@mantine/core";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
-
-function TooltipProvider({
-  delayDuration = 0,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-  return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delayDuration={delayDuration}
-      {...props}
-    />
-  )
+interface TooltipProviderProps {
+  delayDuration?: number;
+  children?: React.ReactNode;
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+function TooltipProvider({ children }: TooltipProviderProps) {
+  return <>{children}</>;
+}
+
+interface TooltipProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  delayDuration?: number;
+  children?: React.ReactNode;
+}
+
+const TooltipContext = React.createContext<{
+  label?: React.ReactNode;
+  setLabel: (label: React.ReactNode) => void;
+}>({ setLabel: () => {} });
+
+function Tooltip({ children, delayDuration = 0 }: TooltipProps) {
+  const [label, setLabel] = React.useState<React.ReactNode>(null);
+
   return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  )
+    <TooltipContext.Provider value={{ label, setLabel }}>
+      <MantineTooltip
+        label={label}
+        openDelay={delayDuration}
+        withArrow
+        arrowSize={6}
+      >
+        <span className="inline-flex">{children}</span>
+      </MantineTooltip>
+    </TooltipContext.Provider>
+  );
 }
 
 function TooltipTrigger({
+  children,
+  asChild,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}: React.ComponentProps<"button"> & { asChild?: boolean }) {
+  if (asChild && React.isValidElement(children)) {
+    return <>{children}</>;
+  }
+
+  return (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  );
+}
+
+interface TooltipContentProps extends React.ComponentProps<"div"> {
+  sideOffset?: number;
 }
 
 function TooltipContent({
@@ -39,23 +67,27 @@ function TooltipContent({
   sideOffset = 0,
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
-  return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
-        className={cn(
-          "bg-foreground text-background animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
-          className
-        )}
-        {...props}
-      >
-        {children}
-        <TooltipPrimitive.Arrow className="bg-foreground fill-foreground z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
-  )
+}: TooltipContentProps) {
+  const { setLabel } = React.useContext(TooltipContext);
+
+  React.useEffect(() => {
+    setLabel(children);
+  }, [children, setLabel]);
+
+  return null; // Content is rendered via the label prop on MantineTooltip
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+// Simple unified tooltip component for easy usage
+interface SimpleTooltipProps extends Omit<MantineTooltipProps, "children"> {
+  children: React.ReactNode;
+}
+
+function SimpleTooltip({ children, ...props }: SimpleTooltipProps) {
+  return (
+    <MantineTooltip withArrow arrowSize={6} {...props}>
+      <span className="inline-flex">{children}</span>
+    </MantineTooltip>
+  );
+}
+
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, SimpleTooltip };

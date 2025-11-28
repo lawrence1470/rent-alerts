@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Select } from "@mantine/core";
 
 interface BedroomBathInputsProps {
   minBeds: number | null | undefined;
@@ -53,17 +46,17 @@ export function BedroomBathInputs({
   disabled,
 }: BedroomBathInputsProps) {
   const handleSelectChange = (
-    value: string,
+    value: string | null,
     onChange: (val: number | null) => void
   ) => {
-    if (value === "null") {
+    if (value === "null" || value === null) {
       onChange(null);
     } else {
       onChange(parseInt(value, 10));
     }
   };
 
-  const getSelectValue = (val: number | null | undefined): string => {
+  const getSelectValue = (val: number | null | undefined): string | null => {
     if (val == null) return "null";
     return val.toString();
   };
@@ -71,76 +64,37 @@ export function BedroomBathInputs({
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       {/* Minimum Bedrooms */}
-      <div className="space-y-2">
-        <Label htmlFor="minBeds">Min Bedrooms</Label>
-        <Select
-          value={getSelectValue(minBeds)}
-          onValueChange={(val) => handleSelectChange(val, onMinBedsChange)}
-          disabled={disabled}
-        >
-          <SelectTrigger id="minBeds" className="w-full">
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            {BEDROOM_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {minBedsError && (
-          <p className="text-sm text-destructive">{minBedsError}</p>
-        )}
-      </div>
+      <Select
+        label="Min Bedrooms"
+        placeholder="Any"
+        value={getSelectValue(minBeds)}
+        onChange={(value) => handleSelectChange(value, onMinBedsChange)}
+        disabled={disabled}
+        error={minBedsError}
+        data={BEDROOM_OPTIONS}
+      />
 
       {/* Maximum Bedrooms */}
-      <div className="space-y-2">
-        <Label htmlFor="maxBeds">Max Bedrooms</Label>
-        <Select
-          value={getSelectValue(maxBeds)}
-          onValueChange={(val) => handleSelectChange(val, onMaxBedsChange)}
-          disabled={disabled}
-        >
-          <SelectTrigger id="maxBeds" className="w-full">
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            {BEDROOM_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {maxBedsError && (
-          <p className="text-sm text-destructive">{maxBedsError}</p>
-        )}
-      </div>
+      <Select
+        label="Max Bedrooms"
+        placeholder="Any"
+        value={getSelectValue(maxBeds)}
+        onChange={(value) => handleSelectChange(value, onMaxBedsChange)}
+        disabled={disabled}
+        error={maxBedsError}
+        data={BEDROOM_OPTIONS}
+      />
 
       {/* Minimum Bathrooms */}
-      <div className="space-y-2">
-        <Label htmlFor="minBaths">Min Bathrooms</Label>
-        <Select
-          value={getSelectValue(minBaths)}
-          onValueChange={(val) => handleSelectChange(val, onMinBathsChange)}
-          disabled={disabled}
-        >
-          <SelectTrigger id="minBaths" className="w-full">
-            <SelectValue placeholder="Any" />
-          </SelectTrigger>
-          <SelectContent>
-            {BATHROOM_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {minBathsError && (
-          <p className="text-sm text-destructive">{minBathsError}</p>
-        )}
-      </div>
+      <Select
+        label="Min Bathrooms"
+        placeholder="Any"
+        value={getSelectValue(minBaths)}
+        onChange={(value) => handleSelectChange(value, onMinBathsChange)}
+        disabled={disabled}
+        error={minBathsError}
+        data={BATHROOM_OPTIONS}
+      />
     </div>
   );
 }

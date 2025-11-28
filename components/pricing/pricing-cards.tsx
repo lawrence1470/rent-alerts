@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Badge as MantineBadge } from '@mantine/core';
 import { Clock, Timer, Zap, Check, AlertCircle, Shield, TrendingDown, ChevronDown, ChevronUp, Star, Users, X } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
@@ -42,7 +43,7 @@ const TESTIMONIALS = [
 ];
 
 type Tier = {
-  id: '1hour' | '1hour-sms' | '30min' | '15min';
+  id: '1hour-sms' | '30min' | '15min';
   name: string;
   description: string;
   pricePerWeek: number;
@@ -203,8 +204,6 @@ export function PricingCards() {
 
   const getGradient = (tierId: string) => {
     switch (tierId) {
-      case '1hour':
-        return 'bg-gradient-to-r from-slate-200 to-slate-300';
       case '1hour-sms':
         return 'bg-gradient-to-r from-green-200 to-emerald-300';
       case '30min':
@@ -308,9 +307,9 @@ export function PricingCards() {
                               <div className="flex items-center gap-2">
                                 <h3 className="text-base font-bold">{tier.name}</h3>
                                 {tier.popular && (
-                                  <Badge className="text-[10px] px-1.5 py-0">
+                                  <MantineBadge size="xs" className="text-[10px] px-1.5 py-0">
                                     Popular
-                                  </Badge>
+                                  </MantineBadge>
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">

@@ -1,107 +1,123 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
+import { Table as MantineTable, TableProps as MantineTableProps } from "@mantine/core";
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
+interface TableProps extends Omit<MantineTableProps, "children"> {
+  className?: string;
+  children?: React.ReactNode;
+}
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({ className, children, ...props }: TableProps) {
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
-      <table
-        data-slot="table"
+    <div className="relative w-full overflow-x-auto">
+      <MantineTable
         className={cn("w-full caption-bottom text-sm", className)}
+        highlightOnHover
         {...props}
-      />
+      >
+        {children}
+      </MantineTable>
     </div>
-  )
+  );
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+function TableHeader({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"thead">) {
   return (
-    <thead
-      data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
-      {...props}
-    />
-  )
+    <MantineTable.Thead className={cn(className)} {...props}>
+      {children}
+    </MantineTable.Thead>
+  );
 }
 
-function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
+function TableBody({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"tbody">) {
   return (
-    <tbody
-      data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
-      {...props}
-    />
-  )
+    <MantineTable.Tbody className={cn(className)} {...props}>
+      {children}
+    </MantineTable.Tbody>
+  );
 }
 
-function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
+function TableFooter({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"tfoot">) {
   return (
-    <tfoot
-      data-slot="table-footer"
+    <MantineTable.Tfoot className={cn(className)} {...props}>
+      {children}
+    </MantineTable.Tfoot>
+  );
+}
+
+function TableRow({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"tr">) {
+  return (
+    <MantineTable.Tr className={cn(className)} {...props}>
+      {children}
+    </MantineTable.Tr>
+  );
+}
+
+function TableHead({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"th">) {
+  return (
+    <MantineTable.Th
       className={cn(
-        "bg-muted/50 border-t font-medium [&>tr]:last:border-b-0",
+        "h-10 px-2 text-left align-middle font-medium whitespace-nowrap",
         className
       )}
       {...props}
-    />
-  )
+    >
+      {children}
+    </MantineTable.Th>
+  );
 }
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+function TableCell({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"td">) {
   return (
-    <tr
-      data-slot="table-row"
-      className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
-        className
-      )}
+    <MantineTable.Td
+      className={cn("p-2 align-middle whitespace-nowrap", className)}
       {...props}
-    />
-  )
+    >
+      {children}
+    </MantineTable.Td>
+  );
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
-  return (
-    <th
-      data-slot="table-head"
-      className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return (
-    <td
-      data-slot="table-cell"
-      className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
-        className
-      )}
-      {...props}
-    />
-  )
+interface TableCaptionProps {
+  className?: string;
+  children?: React.ReactNode;
 }
 
 function TableCaption({
   className,
-  ...props
-}: React.ComponentProps<"caption">) {
+  children,
+}: TableCaptionProps) {
   return (
-    <caption
-      data-slot="table-caption"
-      className={cn("text-muted-foreground mt-4 text-sm", className)}
-      {...props}
-    />
-  )
+    <MantineTable.Caption className={cn("mt-4 text-sm", className)}>
+      {children}
+    </MantineTable.Caption>
+  );
 }
 
 export {
@@ -113,4 +129,4 @@ export {
   TableRow,
   TableCell,
   TableCaption,
-}
+};

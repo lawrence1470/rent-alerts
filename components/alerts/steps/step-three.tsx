@@ -1,21 +1,7 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { TextInput, Select } from "@mantine/core";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Info } from "lucide-react";
 import { AlertFormData } from "../types";
 
 type StepThreeProps = {
@@ -41,48 +27,38 @@ export function StepThree({ formData, updateFormData }: StepThreeProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="min-price">Minimum Price</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
-                </span>
-                <Input
-                  id="min-price"
-                  type="number"
-                  placeholder="2,000"
-                  value={formData.minPrice ?? ""}
-                  onChange={(e) =>
-                    updateFormData({
-                      minPrice: e.target.value
-                        ? parseInt(e.target.value)
-                        : null,
-                    })
-                  }
-                  className="pl-7"
-                />
-              </div>
+              <TextInput
+                id="min-price"
+                type="number"
+                placeholder="2,000"
+                value={formData.minPrice?.toString() ?? ""}
+                onChange={(e) =>
+                  updateFormData({
+                    minPrice: e.target.value
+                      ? parseInt(e.target.value)
+                      : null,
+                  })
+                }
+                leftSection="$"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="max-price">Maximum Price</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
-                </span>
-                <Input
-                  id="max-price"
-                  type="number"
-                  placeholder="3,500"
-                  value={formData.maxPrice ?? ""}
-                  onChange={(e) =>
-                    updateFormData({
-                      maxPrice: e.target.value
-                        ? parseInt(e.target.value)
-                        : null,
-                    })
-                  }
-                  className="pl-7"
-                />
-              </div>
+              <TextInput
+                id="max-price"
+                type="number"
+                placeholder="3,500"
+                value={formData.maxPrice?.toString() ?? ""}
+                onChange={(e) =>
+                  updateFormData({
+                    maxPrice: e.target.value
+                      ? parseInt(e.target.value)
+                      : null,
+                  })
+                }
+                leftSection="$"
+              />
             </div>
           </div>
           {formData.minPrice &&
@@ -98,92 +74,41 @@ export function StepThree({ formData, updateFormData }: StepThreeProps) {
         <div className="space-y-3 p-4 rounded-lg border bg-card">
           <h4 className="font-medium">Bedrooms & Bathrooms</h4>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="bedrooms">Select bedroom type</Label>
-              <Select
-                value={formData.bedrooms ?? undefined}
-                onValueChange={(value) =>
-                  updateFormData({
-                    bedrooms: value as AlertFormData["bedrooms"],
-                  })
-                }
-              >
-                <SelectTrigger id="bedrooms">
-                  <SelectValue placeholder="Any" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="studio">Studio</SelectItem>
-                  <SelectItem value="1">1 Bedroom</SelectItem>
-                  <SelectItem value="2">2 Bedrooms</SelectItem>
-                  <SelectItem value="3">3 Bedrooms</SelectItem>
-                  <SelectItem value="4+">4+ Bedrooms</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bathrooms">Minimum bathrooms</Label>
-              <Select
-                value={formData.minBaths?.toString() ?? undefined}
-                onValueChange={(value) =>
-                  updateFormData({
-                    minBaths: parseInt(value),
-                  })
-                }
-              >
-                <SelectTrigger id="bathrooms">
-                  <SelectValue placeholder="Any" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 Bathroom</SelectItem>
-                  <SelectItem value="2">2 Bathrooms</SelectItem>
-                  <SelectItem value="3">3 Bathrooms</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Options */}
-        <div className="space-y-3 p-4 rounded-lg border bg-card">
-          <h4 className="font-medium">Additional Options</h4>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="rent-stabilized"
-              checked={formData.filterRentStabilized}
-              onCheckedChange={(checked) =>
-                updateFormData({ filterRentStabilized: checked as boolean })
+            <Select
+              label="Select bedroom type"
+              placeholder="Any"
+              value={formData.bedrooms ?? null}
+              onChange={(value) =>
+                updateFormData({
+                  bedrooms: value as AlertFormData["bedrooms"],
+                })
               }
+              data={[
+                { value: "studio", label: "Studio" },
+                { value: "1", label: "1 Bedroom" },
+                { value: "2", label: "2 Bedrooms" },
+                { value: "3", label: "3 Bedrooms" },
+                { value: "4+", label: "4+ Bedrooms" },
+              ]}
+              clearable
             />
-            <Label
-              htmlFor="rent-stabilized"
-              className="text-sm cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Check if rent stabilized
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Learn more about rent stabilization check"
-                >
-                  <Info className="h-4 w-4" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="start">
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">
-                    How Rent Stabilization Check Works
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    We&apos;ll estimate rent stabilization status based on NYC
-                    building data. Results show probability percentages to help
-                    you make informed decisions.
-                  </p>
-                </div>
-              </PopoverContent>
-            </Popover>
+
+            <Select
+              label="Minimum bathrooms"
+              placeholder="Any"
+              value={formData.minBaths?.toString() ?? null}
+              onChange={(value) =>
+                updateFormData({
+                  minBaths: value ? parseInt(value) : null,
+                })
+              }
+              data={[
+                { value: "1", label: "1 Bathroom" },
+                { value: "2", label: "2 Bathrooms" },
+                { value: "3", label: "3 Bathrooms" },
+              ]}
+              clearable
+            />
           </div>
         </div>
       </div>

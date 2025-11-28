@@ -10,7 +10,7 @@ import { db } from '@/lib/db';
 import { alerts } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
 import { rebuildAllBatches } from '@/lib/services/alert-batching.service';
-import { hasPremiumAccess } from '@/lib/services/access-validation.service';
+import { hasPremiumAccess, getAllActivePeriodsForUser } from '@/lib/services/access-validation.service';
 
 // ============================================================================
 // GET /api/alerts - List user's alerts
@@ -95,6 +95,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check if user has access to the selected frequency tier
+    const preferredFrequency = body.preferredFrequency || '1hour';
+    let isActive = true;
+    let requiresUpgrade = false;
+
+    // Free tier is always available
+    if (preferredFrequency !== '1hour') {
+      const activePeriods = await getAllActivePeriodsForUser(userId);
+      const activeTierIds = activePeriods.map(p => p.tierId);
+
+      // If user doesn't have access to this tier, create as inactive
+      if (!activeTierIds.includes(preferredFrequency)) {
+        isActive = false;
+        requiresUpgrade = true;
+      }
+    }
+
     // Create alert
     const [newAlert] = await db.insert(alerts).values({
       userId,
@@ -108,15 +125,22 @@ export async function POST(request: NextRequest) {
       noFee: body.noFee ?? false,
       filterRentStabilized: body.filterRentStabilized ?? false,
       notifyOnlyNewApartments: body.notifyOnlyNewApartments ?? true,
-      isActive: body.isActive ?? true,
+      preferredFrequency,
+      isActive,
     }).returning();
 
-    // Rebuild batches to include the new alert
-    await rebuildAllBatches();
+    // Rebuild batches to include the new alert (only if active)
+    if (isActive) {
+      await rebuildAllBatches();
+    }
 
     return NextResponse.json({
       success: true,
       alert: newAlert,
+      requiresUpgrade,
+      message: requiresUpgrade
+        ? 'Alert created successfully, but is inactive until you upgrade to the selected tier'
+        : 'Alert created successfully and is now active'
     }, { status: 201 });
 
   } catch (error) {

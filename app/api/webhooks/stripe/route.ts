@@ -51,6 +51,10 @@ export async function POST(request: Request) {
         await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
         break;
 
+      case 'checkout.session.expired':
+        await handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+        break;
+
       case 'payment_intent.succeeded':
         await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent);
         break;
@@ -88,7 +92,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  console.log(`Processing checkout completion for user ${userId}, tier ${tierId}, ${weeks} weeks`);
+  console.log('💳 Payment completed successfully:', {
+    userId,
+    tierId,
+    weeks,
+    purchaseId,
+    amount: session.amount_total ? `$${(session.amount_total / 100).toFixed(2)}` : 'N/A',
+    customerEmail: session.customer_details?.email,
+    sessionId: session.id,
+  });
 
   // Get the purchase record
   const purchase = await db.query.purchases.findFirst({
@@ -102,7 +114,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Check if already processed (idempotency)
   if (purchase.status === 'completed') {
-    console.log(`Purchase ${purchaseId} already completed, skipping`);
+    console.log('⚠️ Purchase already completed (duplicate webhook), skipping:', purchaseId);
     return;
   }
 
@@ -124,7 +136,38 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     })
     .where(eq(purchases.id, purchaseId));
 
-  console.log(`✅ Purchase ${purchaseId} completed successfully`);
+  console.log('✅ Purchase completed and access granted:', {
+    purchaseId,
+    accessPeriodId: accessPeriod.id,
+    expiresAt: accessPeriod.expiresAt.toISOString(),
+  });
+}
+
+/**
+ * Handle checkout.session.expired event
+ */
+async function handleCheckoutExpired(session: Stripe.Checkout.Session) {
+  const { purchaseId } = session.metadata || {};
+
+  console.log('⏰ Checkout session expired (user did not complete payment):', {
+    sessionId: session.id,
+    purchaseId,
+  });
+
+  if (!purchaseId) {
+    console.error('Missing purchaseId in expired session metadata');
+    return;
+  }
+
+  // Mark purchase as failed (checkout expired without payment)
+  await db
+    .update(purchases)
+    .set({
+      status: 'failed',
+    })
+    .where(eq(purchases.id, purchaseId));
+
+  console.log('✅ Purchase marked as failed (expired):', purchaseId);
 }
 
 /**
@@ -153,7 +196,11 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
  * Handle payment_intent.payment_failed event
  */
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
-  console.log(`Payment failed: ${paymentIntent.id}`);
+  console.log('❌ Payment failed:', {
+    paymentIntentId: paymentIntent.id,
+    amount: `$${(paymentIntent.amount / 100).toFixed(2)}`,
+    errorMessage: paymentIntent.last_payment_error?.message || 'Unknown error',
+  });
 
   // Mark purchase as failed
   const purchase = await db.query.purchases.findFirst({

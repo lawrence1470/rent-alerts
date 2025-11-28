@@ -7,11 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, TextInput, Checkbox, Card, Text, Title } from "@mantine/core";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaAutocomplete } from "./area-autocomplete";
 import { PriceRangeInputs } from "./price-range-inputs";
 import { BedroomBathInputs } from "./bedroom-bath-inputs";
@@ -110,26 +107,23 @@ export function AlertForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Alert Name */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Alert Details</CardTitle>
-          <CardDescription>
+      <Card withBorder radius="lg" p="lg">
+        <div className="mb-4">
+          <Title order={4}>Alert Details</Title>
+          <Text size="sm" c="dimmed">
             Give your alert a name and select neighborhoods to monitor
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </Text>
+        </div>
+        <div className="space-y-4">
           {/* Alert Name */}
           <div className="space-y-2">
             <Label htmlFor="name">Alert Name</Label>
-            <Input
+            <TextInput
               id="name"
               placeholder="e.g., Williamsburg Studios"
               {...register("name")}
-              aria-invalid={!!errors.name}
+              error={errors.name?.message}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
           </div>
 
           {/* Neighborhoods */}
@@ -142,18 +136,18 @@ export function AlertForm({
               disabled={isSubmitting}
             />
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>
+      <Card withBorder radius="lg" p="lg">
+        <div className="mb-4">
+          <Title order={4}>Filters</Title>
+          <Text size="sm" c="dimmed">
             Optional filters to narrow down your search results
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+          </Text>
+        </div>
+        <div className="space-y-6">
           {/* Price Range */}
           <div className="space-y-2">
             <Label>Price Range</Label>
@@ -187,85 +181,53 @@ export function AlertForm({
 
           {/* Boolean Filters */}
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="noFee"
-                checked={noFee}
-                onCheckedChange={(checked) =>
-                  setValue("noFee", checked === true, { shouldValidate: true })
-                }
-                disabled={isSubmitting}
-              />
-              <Label
-                htmlFor="noFee"
-                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                No fee listings only
-              </Label>
-            </div>
+            <Checkbox
+              checked={noFee}
+              onChange={(e) =>
+                setValue("noFee", e.currentTarget.checked, { shouldValidate: true })
+              }
+              disabled={isSubmitting}
+              label="No fee listings only"
+            />
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="filterRentStabilized"
-                checked={filterRentStabilized}
-                onCheckedChange={(checked) =>
-                  setValue("filterRentStabilized", checked === true, { shouldValidate: true })
-                }
-                disabled={isSubmitting}
-              />
-              <Label
-                htmlFor="filterRentStabilized"
-                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Rent stabilized listings only
-              </Label>
-            </div>
+            <Checkbox
+              checked={filterRentStabilized}
+              onChange={(e) =>
+                setValue("filterRentStabilized", e.currentTarget.checked, { shouldValidate: true })
+              }
+              disabled={isSubmitting}
+              label="Rent stabilized listings only"
+            />
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Notification Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Preferences</CardTitle>
-          <CardDescription>
+      <Card withBorder radius="lg" p="lg">
+        <div className="mb-4">
+          <Title order={4}>Notification Preferences</Title>
+          <Text size="sm" c="dimmed">
             Choose how you want to be notified about new listings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="enablePhoneNotifications"
-              checked={enablePhoneNotifications}
-              onCheckedChange={(checked) =>
-                setValue("enablePhoneNotifications", checked === true, { shouldValidate: true })
-              }
-              disabled={isSubmitting}
-            />
-            <Label
-              htmlFor="enablePhoneNotifications"
-              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              SMS notifications
-            </Label>
-          </div>
+          </Text>
+        </div>
+        <div className="space-y-3">
+          <Checkbox
+            checked={enablePhoneNotifications}
+            onChange={(e) =>
+              setValue("enablePhoneNotifications", e.currentTarget.checked, { shouldValidate: true })
+            }
+            disabled={isSubmitting}
+            label="SMS notifications"
+          />
 
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="enableEmailNotifications"
-              checked={enableEmailNotifications}
-              onCheckedChange={(checked) =>
-                setValue("enableEmailNotifications", checked === true, { shouldValidate: true })
-              }
-              disabled={isSubmitting}
-            />
-            <Label
-              htmlFor="enableEmailNotifications"
-              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Email notifications
-            </Label>
-          </div>
+          <Checkbox
+            checked={enableEmailNotifications}
+            onChange={(e) =>
+              setValue("enableEmailNotifications", e.currentTarget.checked, { shouldValidate: true })
+            }
+            disabled={isSubmitting}
+            label="Email notifications"
+          />
 
           {errors.enableEmailNotifications && (
             <p className="text-sm text-destructive">
@@ -278,22 +240,14 @@ export function AlertForm({
 
           {/* Notify Only on New Apartments Toggle */}
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="notifyOnlyNewApartments"
-                checked={notifyOnlyNewApartments}
-                onCheckedChange={(checked) =>
-                  setValue("notifyOnlyNewApartments", checked === true, { shouldValidate: true })
-                }
-                disabled={isSubmitting}
-              />
-              <Label
-                htmlFor="notifyOnlyNewApartments"
-                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Only notify me when new apartments are found
-              </Label>
-            </div>
+            <Checkbox
+              checked={notifyOnlyNewApartments}
+              onChange={(e) =>
+                setValue("notifyOnlyNewApartments", e.currentTarget.checked, { shouldValidate: true })
+              }
+              disabled={isSubmitting}
+              label="Only notify me when new apartments are found"
+            />
 
             {/* Disclaimer */}
             {!notifyOnlyNewApartments && (
@@ -304,7 +258,7 @@ export function AlertForm({
               </div>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Form Actions */}
@@ -317,8 +271,7 @@ export function AlertForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+        <Button type="submit" disabled={isSubmitting} leftSection={isSubmitting ? <Loader2 className="size-4 animate-spin" /> : undefined}>
           {mode === "create" ? "Create Alert" : "Update Alert"}
         </Button>
       </div>
