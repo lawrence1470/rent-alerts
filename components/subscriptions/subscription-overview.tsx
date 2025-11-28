@@ -115,6 +115,13 @@ export function SubscriptionOverview() {
     return 'text-slate-500';
   };
 
+  const calculateDaysRemaining = (expiresAt: string): number => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffMs = expiry.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  };
+
   const getTierDetails = (tierId: string) => {
     if (tierId === '15min') return {
       cost: 20,

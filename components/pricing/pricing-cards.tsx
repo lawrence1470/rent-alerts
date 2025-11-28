@@ -9,11 +9,7 @@ import { Clock, Timer, Zap, Check, AlertCircle, Shield, TrendingDown, ChevronDow
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { loadStripe } from '@stripe/stripe-js';
 import { cn } from '@/lib/utils';
-
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface UserSubscription {
   tierId: string;
@@ -147,7 +143,7 @@ export function PricingCards() {
     }
   }
 
-  const handlePurchase = async (tierId: '1hour-sms' | '30min' | '15min') => {
+  const handlePurchase = async (tierId: '1hour' | '1hour-sms' | '30min' | '15min') => {
     if (!user) {
       toast.info('Sign in required', {
         description: 'Please sign in to purchase access',
@@ -172,14 +168,17 @@ export function PricingCards() {
         throw new Error(error.error || 'Failed to create checkout session');
       }
 
-      const { url } = await response.json();
+      const { url, sessionId } = await response.json();
 
-      if (!url) {
+      // Stripe JS v8+ doesn't have redirectToCheckout, use URL redirect
+      if (url) {
+        window.location.href = url;
+      } else if (sessionId) {
+        // Fallback: construct checkout URL manually
+        window.location.href = `https://checkout.stripe.com/c/pay/${sessionId}`;
+      } else {
         throw new Error('No checkout URL returned');
       }
-
-      // Redirect to Stripe Checkout
-      window.location.href = url;
     } catch (error) {
       console.error('Purchase error:', error);
       toast.error('Purchase failed', {

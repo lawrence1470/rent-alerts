@@ -8,6 +8,8 @@ import { z } from "zod";
  * Alert form validation schema
  *
  * Mirrors the database schema requirements with client-side validation
+ * Note: Boolean fields use plain z.boolean() to avoid input/output type mismatch
+ * with react-hook-form. Defaults are provided in defaultAlertValues instead.
  */
 export const alertFormSchema = z.object({
   // Required fields
@@ -58,7 +60,7 @@ export const alertFormSchema = z.object({
     .nullable()
     .optional(),
 
-  // Boolean filters
+  // Boolean filters (plain booleans - defaults handled in form)
   noFee: z.boolean(),
   filterRentStabilized: z.boolean(),
 

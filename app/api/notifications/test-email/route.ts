@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
         minBaths: null,
         noFee: false,
         filterRentStabilized: false,
+        notifyOnlyNewApartments: true,
         enablePhoneNotifications: true,
         enableEmailNotifications: true,
         preferredFrequency: '1hour' as const,
