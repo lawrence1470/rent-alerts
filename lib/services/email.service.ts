@@ -8,6 +8,7 @@
 import { Resend } from 'resend';
 import type { Listing, Alert } from '../schema';
 import RentalNotificationEmail from '../templates/rental-notification-email';
+import RentalDigestEmail, { type DigestListing } from '../templates/rental-digest-email';
 
 // ============================================================================
 // TYPES
@@ -180,8 +181,8 @@ export async function sendBatchEmails(emails: EmailOptions[]): Promise<{
       failed++;
     }
 
-    // Small delay to avoid rate limiting (50ms between emails)
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Delay to respect Resend rate limit (2 req/sec = 500ms between emails)
+    await new Promise(resolve => setTimeout(resolve, 550));
   }
 
   return { sent, failed, results };
@@ -194,10 +195,10 @@ export async function sendBatchEmails(emails: EmailOptions[]): Promise<{
 /**
  * Formats a rental notification email using React Email template
  */
-export function formatRentalNotificationEmail(
+export async function formatRentalNotificationEmail(
   listing: Listing,
   alert: Alert
-): { subject: string; html: string } {
+): Promise<{ subject: string; html: string }> {
   // Create email data object
   const emailData: RentalEmailData = {
     listing: {
@@ -220,11 +221,49 @@ export function formatRentalNotificationEmail(
   // Generate subject line
   const subject = `New Rental Match: ${listing.bedrooms}BR in ${listing.neighborhood} - $${listing.price.toLocaleString()}`;
 
-  // Import and render React Email component
+  // Import and render React Email component (render is async)
   const { render } = require('@react-email/components');
-  const html = render(RentalNotificationEmail(emailData));
+  const html = await render(RentalNotificationEmail(emailData));
 
   return { subject, html };
+}
+
+/**
+ * Formats a digest email containing multiple listings
+ * Used when batching notifications by user+alert
+ */
+export async function formatDigestEmail(
+  listings: Listing[],
+  alert: Alert
+): Promise<{ subject: string; html: string }> {
+  // Transform listings to digest format
+  const digestListings: DigestListing[] = listings.map((listing) => ({
+    address: listing.address,
+    price: listing.price,
+    bedrooms: listing.bedrooms?.toString() || 'Studio',
+    bathrooms: listing.bathrooms || undefined,
+    url: listing.listingUrl,
+    neighborhood: listing.neighborhood,
+    noFee: listing.noFee || false,
+  }));
+
+  // Generate subject line with count
+  const count = listings.length;
+  const subject = `[${count}] New Rentals Matching "${alert.name}"`;
+
+  // Render React Email component
+  const { render } = require('@react-email/components');
+  const emailComponent = RentalDigestEmail({
+    listings: digestListings,
+    alert: { name: alert.name },
+  });
+
+  const html = await render(emailComponent);
+
+  // Ensure html is a string (render might return object in some versions)
+  const htmlString = typeof html === 'string' ? html : (html as any).html || String(html);
+
+  return { subject, html: htmlString };
 }
 
 /**

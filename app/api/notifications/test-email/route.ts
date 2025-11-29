@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       };
 
       // Format and send rental notification email
-      const { subject, html } = formatRentalNotificationEmail(
+      const { subject, html } = await formatRentalNotificationEmail(
         sampleListing,
         sampleAlert
       );
