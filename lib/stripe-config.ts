@@ -86,6 +86,32 @@ export function requiresPayment(tierId: TierId): boolean {
 }
 
 /**
+ * Get discount percentage based on monthly packs
+ * - 1 month (4 weeks): 0%
+ * - 2 months (8 weeks): 10%
+ * - 3 months (12 weeks): 20%
+ */
+export function getDiscountPercent(weeks: number): number {
+  if (weeks >= 12) return 20;
+  if (weeks >= 8) return 10;
+  return 0;
+}
+
+/**
+ * Calculate price with tiered discount
+ */
+export function calculatePriceWithDiscount(
+  pricePerWeekCents: number,
+  weeks: number
+): { subtotal: number; discount: number; total: number; discountPercent: number } {
+  const subtotal = pricePerWeekCents * weeks;
+  const discountPercent = getDiscountPercent(weeks);
+  const discount = Math.round(subtotal * (discountPercent / 100));
+  const total = subtotal - discount;
+  return { subtotal, discount, total, discountPercent };
+}
+
+/**
  * Get tier configuration
  */
 export function getTierConfig(tierId: TierId) {

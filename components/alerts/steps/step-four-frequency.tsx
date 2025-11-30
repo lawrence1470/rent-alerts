@@ -1,11 +1,10 @@
 "use client";
 
-import { Label } from "@/components/ui/label";
 import { AlertFormData } from "../types";
-import { Clock, Zap, Timer, Lock, MessageSquare, ExternalLink, CheckCircle as CheckCircleIcon } from "lucide-react";
+import { Clock, Zap, Timer, Crown, ExternalLink, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Switch, Button, UnstyledButton } from "@mantine/core";
+import { Badge } from "@mantine/core";
 import Link from "next/link";
 
 type StepFourFrequencyProps = {
@@ -28,7 +27,7 @@ const FREQUENCY_OPTIONS: FrequencyOption[] = [
     value: '1hour',
     label: 'Hourly Checks',
     description: 'Check for new listings every hour',
-    pricePerWeek: 0, // Free tier
+    pricePerWeek: 0,
     checksPerDay: 24,
     icon: <Clock className="h-5 w-5" />,
     requiresPayment: false,
@@ -37,7 +36,7 @@ const FREQUENCY_OPTIONS: FrequencyOption[] = [
     value: '30min',
     label: '30-Minute Checks',
     description: 'Check for new listings every 30 minutes',
-    pricePerWeek: 15,
+    pricePerWeek: 20, // Part of premium tier
     checksPerDay: 48,
     icon: <Timer className="h-5 w-5" />,
     requiresPayment: true,
@@ -46,7 +45,7 @@ const FREQUENCY_OPTIONS: FrequencyOption[] = [
     value: '15min',
     label: '15-Minute Checks',
     description: 'Check for new listings every 15 minutes',
-    pricePerWeek: 20,
+    pricePerWeek: 20, // Part of premium tier
     checksPerDay: 96,
     icon: <Zap className="h-5 w-5" />,
     requiresPayment: true,
@@ -58,23 +57,23 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
   const [hasActiveAccess, setHasActiveAccess] = useState<Record<string, boolean>>({
     '15min': false,
     '30min': false,
-    '1hour': true, // Always available (free)
+    '1hour': true,
   });
 
-  // Check user's active access tiers
   useEffect(() => {
     if (user) {
       fetch('/api/user/access')
         .then(res => res.json())
         .then(data => {
+          // Premium tier (15min) unlocks both 15min and 30min
+          const hasPremium = data.activeTiers?.includes('15min') || false;
           setHasActiveAccess({
-            '15min': data.activeTiers?.includes('15min') || false,
-            '30min': data.activeTiers?.includes('30min') || false,
-            '1hour': true, // Always available
+            '15min': hasPremium,
+            '30min': hasPremium, // 30min included with premium
+            '1hour': true,
           });
         })
         .catch(() => {
-          // Default to free tier only on error
           setHasActiveAccess({
             '15min': false,
             '30min': false,
@@ -89,137 +88,125 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
   };
 
   return (
-    <div className="space-y-8 py-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Notification Frequency</h3>
-          <p className="text-sm text-muted-foreground mb-6">
-            Choose how often you'd like us to check for new listings that match your criteria.
-          </p>
-        </div>
-        <Button
-          component={Link}
-          href="/subscriptions"
-          target="_blank"
-          variant="outline"
-          size="sm"
-          className="flex-shrink-0"
-        >
-          View Pricing
-          <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-        </Button>
+    <div className="space-y-6 py-4">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">How often should we check?</h3>
+        <p className="text-sm text-muted-foreground">
+          Choose how frequently you'd like us to scan for new listings that match your criteria.
+        </p>
       </div>
 
-      {/* Frequency Options */}
-      <div className="space-y-3">
+      <div className="space-y-4" role="radiogroup" aria-label="Notification frequency">
         {FREQUENCY_OPTIONS.map((option) => {
           const isSelected = formData.preferredFrequency === option.value;
           const hasAccess = hasActiveAccess[option.value];
           const isLocked = option.requiresPayment && !hasAccess;
 
           return (
-            <div key={option.value} className="relative">
-              <UnstyledButton
-                onClick={() => {
-                  if (!isLocked) {
-                    handleFrequencyChange(option.value);
-                  }
-                }}
-                disabled={isLocked}
-                className={`
-                  group relative flex w-full cursor-pointer rounded-lg border bg-card px-5 py-4 shadow-sm transition
-                  focus:outline-none
-                  ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}
-                  ${isLocked ? 'opacity-60 cursor-not-allowed' : ''}
-                `}
-              >
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className={`
-                      mt-0.5
-                      ${isSelected ? 'text-primary' : 'text-muted-foreground'}
-                      ${isLocked ? 'text-muted-foreground/50' : ''}
-                    `}>
+            <div
+              key={option.value}
+              role="radio"
+              aria-checked={isSelected}
+              aria-disabled={isLocked}
+              tabIndex={isLocked ? -1 : 0}
+              onClick={() => !isLocked && handleFrequencyChange(option.value)}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && !isLocked) {
+                  e.preventDefault();
+                  handleFrequencyChange(option.value);
+                }
+              }}
+              className={`
+                relative rounded-lg border bg-card px-5 py-4 shadow-sm transition-all
+                ${isLocked
+                  ? 'border-dashed border-muted-foreground/30 bg-muted/30 cursor-not-allowed'
+                  : 'cursor-pointer hover:border-primary/50'
+                }
+                ${isSelected && !isLocked ? 'border-primary ring-1 ring-primary' : 'border-border'}
+              `}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className={`mt-0.5 ${isLocked ? 'opacity-50' : ''}`}>
+                    <div className={isSelected && !isLocked ? 'text-primary' : 'text-muted-foreground'}>
                       {option.icon}
-                    </div>
-
-                    <div className="text-sm flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-foreground">
-                          {option.label}
-                        </p>
-                        {isLocked && (
-                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                        )}
-                        {option.pricePerWeek > 0 && (
-                          <span className="text-xs font-medium text-primary">
-                            ${option.pricePerWeek}/week
-                          </span>
-                        )}
-                        {option.pricePerWeek === 0 && (
-                          <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                            Free
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-muted-foreground mb-1">
-                        {option.description}
-                      </p>
-
-                      <p className="text-xs text-muted-foreground">
-                        Up to {option.checksPerDay} checks per day
-                      </p>
-
-                      {option.value === '1hour' && (
-                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                          Email notifications only
-                        </p>
-                      )}
-
-                      {option.requiresPayment && !isLocked && isSelected && (
-                        <div className="mt-3 pt-3 border-t border-border/50">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                              <Label htmlFor={`sms-${option.value}`} className="text-sm font-normal cursor-pointer">
-                                Enable SMS notifications
-                              </Label>
-                            </div>
-                            <Switch
-                              id={`sms-${option.value}`}
-                              checked={formData.enablePhoneNotifications}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                updateFormData({ enablePhoneNotifications: e.currentTarget.checked });
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1 ml-6">
-                            Get instant text alerts when new listings match
-                          </p>
-                        </div>
-                      )}
-
-                      {isLocked && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                          Purchase {option.label.toLowerCase()} access to use this frequency
-                        </p>
-                      )}
                     </div>
                   </div>
 
+                  <div className="text-sm flex-1">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className={`font-semibold ${isLocked ? 'text-muted-foreground' : 'text-foreground'}`}>
+                        {option.label}
+                      </p>
+                      {option.pricePerWeek === 0 ? (
+                        <Badge size="xs" variant="light" color="green">
+                          Free
+                        </Badge>
+                      ) : isLocked ? (
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          color="violet"
+                          leftSection={<Crown className="h-3 w-3" />}
+                        >
+                          Premium
+                        </Badge>
+                      ) : (
+                        <Badge size="xs" variant="light" color="green">
+                          Unlocked
+                        </Badge>
+                      )}
+                    </div>
+
+                    <p className={isLocked ? 'text-muted-foreground/70' : 'text-muted-foreground'}>
+                      {option.description}
+                    </p>
+
+                    <p className={`text-xs mt-1 ${isLocked ? 'text-muted-foreground/60' : 'text-muted-foreground'}`}>
+                      Up to {option.checksPerDay} checks per day
+                    </p>
+
+                    {option.value === '1hour' && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Email notifications only
+                      </p>
+                    )}
+
+                    {option.requiresPayment && hasAccess && (
+                      <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                        ✓ You have access to this tier
+                      </p>
+                    )}
+
+                    {isLocked && (
+                      <Link
+                        href="/subscriptions"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <Crown className="h-3 w-3" />
+                        Upgrade to unlock
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selection indicator */}
+                <div className="flex-shrink-0 ml-4">
                   {!isLocked && (
-                    <CheckCircleIcon
-                      className={`
-                        h-6 w-6 text-primary flex-shrink-0 transition
-                        ${isSelected ? 'opacity-100' : 'opacity-0'}
-                      `}
-                    />
+                    <div className={`
+                      h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all
+                      ${isSelected
+                        ? 'border-primary bg-primary'
+                        : 'border-muted-foreground/30'
+                      }
+                    `}>
+                      {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </div>
                   )}
                 </div>
-              </UnstyledButton>
+              </div>
             </div>
           );
         })}

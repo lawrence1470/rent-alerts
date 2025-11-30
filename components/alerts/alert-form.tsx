@@ -7,10 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, TextInput, Checkbox, Card, Text, Title } from "@mantine/core";
+import { Button, TextInput, Checkbox, Card, Text, Title, Badge } from "@mantine/core";
 import { Label } from "@/components/ui/label";
-import { AreaAutocomplete } from "./area-autocomplete";
 import { PriceRangeInputs } from "./price-range-inputs";
+import { NYC_BOROUGHS } from "@/lib/neighborhoods";
 import { BedroomBathInputs } from "./bedroom-bath-inputs";
 
 import {
@@ -111,7 +111,7 @@ export function AlertForm({
         <div className="mb-4">
           <Title order={4}>Alert Details</Title>
           <Text size="sm" c="dimmed">
-            Give your alert a name and select neighborhoods to monitor
+            Give your alert a name and select boroughs to monitor
           </Text>
         </div>
         <div className="space-y-4">
@@ -126,15 +126,43 @@ export function AlertForm({
             />
           </div>
 
-          {/* Neighborhoods */}
+          {/* Boroughs */}
           <div className="space-y-2">
-            <Label>Neighborhoods</Label>
-            <AreaAutocomplete
-              value={areas ?? ""}
-              onChange={(value) => setValue("areas", value, { shouldValidate: true })}
-              error={errors.areas?.message}
-              disabled={isSubmitting}
-            />
+            <div className="flex items-center justify-between">
+              <Label>Boroughs</Label>
+              {areas && areas.split(",").filter(Boolean).length > 0 && (
+                <Badge color="violet" size="sm">
+                  {areas.split(",").filter(Boolean).length} selected
+                </Badge>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {NYC_BOROUGHS.map((borough) => {
+                const selectedBoroughs = new Set(areas?.split(",").filter(Boolean) ?? []);
+                return (
+                  <Checkbox
+                    key={borough.slug}
+                    checked={selectedBoroughs.has(borough.slug)}
+                    onChange={() => {
+                      const newSelected = new Set(selectedBoroughs);
+                      if (newSelected.has(borough.slug)) {
+                        newSelected.delete(borough.slug);
+                      } else {
+                        newSelected.add(borough.slug);
+                      }
+                      setValue("areas", Array.from(newSelected).join(","), { shouldValidate: true });
+                    }}
+                    disabled={isSubmitting}
+                    label={borough.name}
+                    size="sm"
+                    className="p-2 border rounded-lg hover:bg-muted/50 transition-colors"
+                  />
+                );
+              })}
+            </div>
+            {errors.areas?.message && (
+              <Text size="xs" c="red">{errors.areas.message}</Text>
+            )}
           </div>
         </div>
       </Card>

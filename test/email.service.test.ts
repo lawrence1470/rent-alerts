@@ -294,7 +294,7 @@ describe('Email Sending', () => {
 describe('Email Formatting', () => {
   describe('formatRentalNotificationEmail', () => {
     it('should format rental notification email correctly', async () => {
-      const { subject, html } = formatRentalNotificationEmail(mockListing, mockAlert);
+      const { subject, html } = await formatRentalNotificationEmail(mockListing, mockAlert);
 
       expect(subject).toContain('New Rental Match');
       expect(subject).toContain('2BR');
@@ -305,22 +305,22 @@ describe('Email Formatting', () => {
       expect(html).toBeTruthy();
     });
 
-    it('should handle listings with null bedrooms', () => {
+    it('should handle listings with null bedrooms', async () => {
       const listingNoBeds = { ...mockListing, bedrooms: null };
-      const { subject, html } = formatRentalNotificationEmail(listingNoBeds, mockAlert);
+      const { subject, html } = await formatRentalNotificationEmail(listingNoBeds, mockAlert);
 
       expect(subject).toBeDefined();
       expect(html).toBeDefined();
     });
 
-    it('should generate correct subject line format', () => {
-      const { subject } = formatRentalNotificationEmail(mockListing, mockAlert);
+    it('should generate correct subject line format', async () => {
+      const { subject } = await formatRentalNotificationEmail(mockListing, mockAlert);
 
       expect(subject).toMatch(/New Rental Match: \d+BR in .+ - \$[\d,]+/);
     });
 
-    it('should generate subject with price and neighborhood', () => {
-      const { subject } = formatRentalNotificationEmail(mockListing, mockAlert);
+    it('should generate subject with price and neighborhood', async () => {
+      const { subject } = await formatRentalNotificationEmail(mockListing, mockAlert);
 
       expect(subject).toContain(mockListing.neighborhood);
       expect(subject).toContain('$3,200');
@@ -477,7 +477,7 @@ describe('Integration Tests', () => {
 
   it('should complete full email workflow for rental notification', async () => {
     // 1. Format the email
-    const { subject, html } = formatRentalNotificationEmail(mockListing, mockAlert);
+    const { subject, html } = await formatRentalNotificationEmail(mockListing, mockAlert);
 
     expect(subject).toBeDefined();
     expect(html).toBeDefined();

@@ -125,6 +125,8 @@ export async function POST(request: NextRequest) {
       noFee: body.noFee ?? false,
       filterRentStabilized: body.filterRentStabilized ?? false,
       notifyOnlyNewApartments: body.notifyOnlyNewApartments ?? true,
+      enablePhoneNotifications: body.enablePhoneNotifications ?? true,
+      enableEmailNotifications: body.enableEmailNotifications ?? true,
       preferredFrequency,
       isActive,
     }).returning();

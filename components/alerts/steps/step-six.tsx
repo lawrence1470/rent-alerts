@@ -37,7 +37,7 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                   <Popover.Target>
                     <button
                       type="button"
-                      className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      className="ml-1 inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                       aria-label="Learn more about rent stabilization check"
                     >
                       <Info className="h-4 w-4" />
@@ -141,7 +141,7 @@ export function StepSix({ formData, updateFormData }: StepSixProps) {
                 <Popover.Target>
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                    className="ml-1 inline-flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                     aria-label="Learn more about new apartment notifications"
                   >
                     <Info className="h-4 w-4" />

@@ -8,7 +8,7 @@ import { db } from '../db';
 import { notifications, type Alert, type Listing, type Notification } from '../schema';
 import { eq, and } from 'drizzle-orm';
 import { sendSMS, formatRentalNotificationSMS, isSMSEnabled } from './sms.service';
-import { sendEmail, formatRentalNotificationEmail, isEmailEnabled } from './email.service';
+import { sendEmail, formatRentalNotificationEmail, formatDigestEmail, isEmailEnabled } from './email.service';
 
 // ============================================================================
 // TYPES
@@ -95,44 +95,46 @@ export async function generateNotificationsForAlert(
     return [];
   }
 
-  const notificationsData: NotificationData[] = newListings.map(listing => {
-    const baseData: NotificationData = {
-      userId: alert.userId,
-      alertId: alert.id,
-      listingId: listing.id,
-      channel,
-    };
+  const notificationsData: NotificationData[] = await Promise.all(
+    newListings.map(async (listing) => {
+      const baseData: NotificationData = {
+        userId: alert.userId,
+        alertId: alert.id,
+        listingId: listing.id,
+        channel,
+      };
 
-    // Use different formatting based on channel
-    if (channel === 'sms') {
-      return {
-        ...baseData,
-        body: formatRentalNotificationSMS({
-          address: listing.address,
-          price: listing.price,
-          bedrooms: listing.bedrooms,
-          bathrooms: listing.bathrooms,
-          url: listing.listingUrl,
-          neighborhood: listing.neighborhood,
-        }),
-        phoneNumber,
-      };
-    } else if (channel === 'email') {
-      const { subject } = formatRentalNotificationEmail(listing, alert);
-      return {
-        ...baseData,
-        subject,
-        body: `Email notification for ${listing.address}`, // Store plain text for reference
-        emailAddress,
-      };
-    } else {
-      return {
-        ...baseData,
-        subject: generateNotificationSubject(alert, listing),
-        body: generateNotificationBody(alert, listing),
-      };
-    }
-  });
+      // Use different formatting based on channel
+      if (channel === 'sms') {
+        return {
+          ...baseData,
+          body: formatRentalNotificationSMS({
+            address: listing.address,
+            price: listing.price,
+            bedrooms: listing.bedrooms,
+            bathrooms: listing.bathrooms,
+            url: listing.listingUrl,
+            neighborhood: listing.neighborhood,
+          }),
+          phoneNumber,
+        };
+      } else if (channel === 'email') {
+        const { subject } = await formatRentalNotificationEmail(listing, alert);
+        return {
+          ...baseData,
+          subject,
+          body: `Email notification for ${listing.address}`, // Store plain text for reference
+          emailAddress,
+        };
+      } else {
+        return {
+          ...baseData,
+          subject: generateNotificationSubject(alert, listing),
+          body: generateNotificationBody(alert, listing),
+        };
+      }
+    })
+  );
 
   return createBulkNotifications(notificationsData);
 }
@@ -192,7 +194,7 @@ export async function getPendingNotifications(
 
 /**
  * Processes pending email notifications
- * Integrates with Resend email service
+ * Batches notifications by user+alert to send ONE digest email per alert
  */
 export async function processEmailNotifications(): Promise<{
   sent: number;
@@ -204,68 +206,109 @@ export async function processEmailNotifications(): Promise<{
     return { sent: 0, failed: 0 };
   }
 
-  const pending = await getPendingNotifications('email', 50);
+  const pending = await getPendingNotifications('email', 100);
+  if (pending.length === 0) {
+    return { sent: 0, failed: 0 };
+  }
+
+  // Group notifications by userId + alertId
+  const groups = new Map<string, Notification[]>();
+  for (const notification of pending) {
+    const key = `${notification.userId}:${notification.alertId}`;
+    const group = groups.get(key) || [];
+    group.push(notification);
+    groups.set(key, group);
+  }
+
+  console.log(`[EMAIL] Processing ${pending.length} notifications in ${groups.size} digest(s)`);
+
   let sent = 0;
   let failed = 0;
+  const { listings: listingsTable, alerts: alertsTable } = await import('../schema');
 
-  for (const notification of pending) {
+  // Process each group as a single digest email
+  for (const [key, groupNotifications] of groups) {
     try {
-      // Fetch related listing and alert for email formatting
-      const { listings: listingsTable, alerts: alertsTable } = await import('../schema');
+      const [userId, alertId] = key.split(':');
 
-      const listing = await db.query.listings.findFirst({
-        where: eq(listingsTable.id, notification.listingId),
-      });
-
-      const alert = await db.query.alerts.findFirst({
-        where: eq(alertsTable.id, notification.alertId),
-      });
-
-      if (!listing || !alert) {
-        throw new Error('Listing or alert not found');
-      }
-
-      // Get user email from local database instead of Clerk API
+      // Get user email
       const user = await db.query.users.findFirst({
-        where: (users, { eq }) => eq(users.id, notification.userId),
+        where: (users, { eq }) => eq(users.id, userId),
       });
 
       if (!user || !user.email) {
         throw new Error('User or email not found in database');
       }
 
-      const emailAddress = user.email;
+      // Get alert info
+      const alert = await db.query.alerts.findFirst({
+        where: eq(alertsTable.id, alertId),
+      });
 
-      // Format and send email
-      const { subject, html } = formatRentalNotificationEmail(listing, alert);
+      if (!alert) {
+        throw new Error('Alert not found');
+      }
+
+      // Fetch all listings for this group
+      const listingIds = groupNotifications.map(n => n.listingId);
+      const listings: Listing[] = [];
+
+      for (const listingId of listingIds) {
+        const listing = await db.query.listings.findFirst({
+          where: eq(listingsTable.id, listingId),
+        });
+        if (listing) {
+          listings.push(listing);
+        }
+      }
+
+      if (listings.length === 0) {
+        throw new Error('No listings found for notifications');
+      }
+
+      // Format and send digest email
+      console.log(`[EMAIL] Formatting digest for ${listings.length} listings...`);
+      const { subject, html } = await formatDigestEmail(listings, alert);
+      console.log(`[EMAIL] Subject: ${subject}, HTML length: ${html?.length || 0}`);
+
       const result = await sendEmail({
-        to: emailAddress,
+        to: user.email,
         subject,
         html,
       });
 
       if (result.success) {
-        // Update notification with Resend message ID
-        await db.update(notifications)
-          .set({
-            status: 'sent',
-            sentAt: new Date(),
-            resendMessageId: result.messageId,
-            emailAddress,
-          })
-          .where(eq(notifications.id, notification.id));
+        // Mark all notifications in group as sent
+        const sentAt = new Date();
+        for (const notification of groupNotifications) {
+          await db.update(notifications)
+            .set({
+              status: 'sent',
+              sentAt,
+              resendMessageId: result.messageId,
+              emailAddress: user.email,
+            })
+            .where(eq(notifications.id, notification.id));
+        }
 
-        sent++;
+        console.log(`[EMAIL] Sent digest with ${listings.length} listings to ${user.email}`);
+        sent += groupNotifications.length;
       } else {
         throw new Error(result.error || 'Failed to send email');
       }
     } catch (error) {
-      await markNotificationFailed(
-        notification.id,
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-      failed++;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[EMAIL] Digest failed: ${errorMessage}`);
+
+      // Mark all notifications in group as failed
+      for (const notification of groupNotifications) {
+        await markNotificationFailed(notification.id, errorMessage);
+      }
+      failed += groupNotifications.length;
     }
+
+    // Delay between digest emails (Resend rate limit)
+    await new Promise(resolve => setTimeout(resolve, 550));
   }
 
   return { sent, failed };

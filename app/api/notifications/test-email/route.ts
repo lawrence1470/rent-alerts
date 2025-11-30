@@ -108,10 +108,10 @@ export async function POST(request: NextRequest) {
         minBaths: null,
         noFee: false,
         filterRentStabilized: false,
+        notifyOnlyNewApartments: true,
         enablePhoneNotifications: true,
         enableEmailNotifications: true,
         preferredFrequency: '1hour' as const,
-        notifyOnlyNewApartments: false,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       };
 
       // Format and send rental notification email
-      const { subject, html } = formatRentalNotificationEmail(
+      const { subject, html } = await formatRentalNotificationEmail(
         sampleListing,
         sampleAlert
       );

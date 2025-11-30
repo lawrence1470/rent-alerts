@@ -112,7 +112,7 @@ const AlertDialogCancel = ({
 )
 
 // Placeholder components for compatibility
-const AlertDialogTrigger = ({ children }: { children: React.ReactNode }) => (
+const AlertDialogTrigger = ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
   <>{children}</>
 )
 const AlertDialogPortal = ({ children }: { children: React.ReactNode }) => (

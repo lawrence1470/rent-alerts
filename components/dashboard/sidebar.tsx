@@ -15,6 +15,7 @@ import {
   X,
   Plus,
   CreditCard,
+  HelpCircle,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -56,6 +57,13 @@ const navigationItems = [
     name: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
+    badge: null,
+    badgeType: null,
+  },
+  {
+    name: "Help & FAQ",
+    href: "/faq",
+    icon: HelpCircle,
     badge: null,
     badgeType: null,
   },
