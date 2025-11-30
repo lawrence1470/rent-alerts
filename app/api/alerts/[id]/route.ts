@@ -118,6 +118,8 @@ export async function PATCH(
         noFee: body.noFee !== undefined ? body.noFee : existingAlert.noFee,
         filterRentStabilized: body.filterRentStabilized !== undefined ? body.filterRentStabilized : existingAlert.filterRentStabilized,
         notifyOnlyNewApartments: body.notifyOnlyNewApartments !== undefined ? body.notifyOnlyNewApartments : existingAlert.notifyOnlyNewApartments,
+        enablePhoneNotifications: body.enablePhoneNotifications !== undefined ? body.enablePhoneNotifications : existingAlert.enablePhoneNotifications,
+        enableEmailNotifications: body.enableEmailNotifications !== undefined ? body.enableEmailNotifications : existingAlert.enableEmailNotifications,
         isActive: body.isActive !== undefined ? body.isActive : existingAlert.isActive,
         updatedAt: new Date(),
       })

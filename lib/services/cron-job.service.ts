@@ -66,8 +66,9 @@ function shouldCheckAlert(alert: any): boolean {
 /**
  * Main function to check all active alerts for new listings
  * This is called by the Vercel cron endpoint every 15 minutes
+ * @param force - If true, bypasses timing checks (for manual testing)
  */
-export async function checkAllAlerts(): Promise<CronJobResult> {
+export async function checkAllAlerts(force: boolean = false): Promise<CronJobResult> {
   const startTime = Date.now();
   const logId = await createCronJobLog('check-alerts', 'started');
 
@@ -122,7 +123,8 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
 
           try {
             // Check if this alert should be checked based on its frequency
-            if (!shouldCheckAlert(alert)) {
+            // Skip timing check if force=true (manual testing)
+            if (!force && !shouldCheckAlert(alert)) {
               console.log(`Alert ${alert.name}: Skipping (not time yet for ${alert.preferredFrequency} checks)`);
 
               // Record skipped run
@@ -270,12 +272,15 @@ export async function checkAllAlerts(): Promise<CronJobResult> {
               totalNotifications += notifications.length;
             }
 
-            // Mark listings as seen
-            await markListingsAsSeen(
-              alert.userId,
-              alert.id,
-              newListings.map(l => l.id)
-            );
+            // Only mark listings as seen if notifications were actually created
+            // This prevents marking listings as seen when notification creation fails
+            if (notificationsSent > 0 && newListings.length > 0) {
+              await markListingsAsSeen(
+                alert.userId,
+                alert.id,
+                newListings.map(l => l.id)
+              );
+            }
 
             // Update alert's lastChecked timestamp
             await db.update(alerts)

@@ -36,7 +36,7 @@ const FREQUENCY_OPTIONS: FrequencyOption[] = [
     value: '30min',
     label: '30-Minute Checks',
     description: 'Check for new listings every 30 minutes',
-    pricePerWeek: 15,
+    pricePerWeek: 20, // Part of premium tier
     checksPerDay: 48,
     icon: <Timer className="h-5 w-5" />,
     requiresPayment: true,
@@ -45,7 +45,7 @@ const FREQUENCY_OPTIONS: FrequencyOption[] = [
     value: '15min',
     label: '15-Minute Checks',
     description: 'Check for new listings every 15 minutes',
-    pricePerWeek: 20,
+    pricePerWeek: 20, // Part of premium tier
     checksPerDay: 96,
     icon: <Zap className="h-5 w-5" />,
     requiresPayment: true,
@@ -65,9 +65,11 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
       fetch('/api/user/access')
         .then(res => res.json())
         .then(data => {
+          // Premium tier (15min) unlocks both 15min and 30min
+          const hasPremium = data.activeTiers?.includes('15min') || false;
           setHasActiveAccess({
-            '15min': data.activeTiers?.includes('15min') || false,
-            '30min': data.activeTiers?.includes('30min') || false,
+            '15min': hasPremium,
+            '30min': hasPremium, // 30min included with premium
             '1hour': true,
           });
         })
@@ -147,11 +149,11 @@ export function StepFourFrequency({ formData, updateFormData }: StepFourFrequenc
                           color="violet"
                           leftSection={<Crown className="h-3 w-3" />}
                         >
-                          ${option.pricePerWeek}/week
+                          Premium
                         </Badge>
                       ) : (
-                        <Badge size="xs" variant="light" color="blue">
-                          ${option.pricePerWeek}/week
+                        <Badge size="xs" variant="light" color="green">
+                          Unlocked
                         </Badge>
                       )}
                     </div>

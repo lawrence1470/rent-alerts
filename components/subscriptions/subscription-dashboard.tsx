@@ -1,10 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, Skeleton } from "@mantine/core";
+import { Card, Skeleton, Button } from "@mantine/core";
 import { CurrentPlanHero } from "./current-plan-hero";
-import { SubscriptionStats } from "./subscription-stats";
 import { NotificationPreferences } from "./notification-preferences";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 interface DashboardData {
   currentPlan: {
@@ -32,42 +43,33 @@ interface DashboardData {
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl">
       {/* Hero Skeleton */}
-      <Card className="rounded-xl" padding="lg">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton height={48} width={48} radius="xl" />
+      <Card className="rounded-2xl" padding="lg">
+        <div className="flex items-center gap-3 mb-4">
+          <Skeleton height={44} width={44} radius="xl" />
           <div>
-            <Skeleton height={20} width={200} radius="md" mb={8} />
-            <Skeleton height={14} width={150} radius="md" />
+            <Skeleton height={18} width={120} radius="md" mb={6} />
+            <Skeleton height={14} width={100} radius="md" />
           </div>
         </div>
-        <Skeleton height={12} radius="xl" mb={8} />
-        <Skeleton height={8} radius="md" width="60%" />
+        <Skeleton height={14} width="80%" radius="md" mb={4} />
+        <Skeleton height={40} radius="md" />
       </Card>
 
-      {/* Stats Skeleton */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="rounded-xl" padding="md">
-            <div className="flex items-start gap-3">
-              <Skeleton height={40} width={40} radius="md" />
-              <div className="flex-1">
-                <Skeleton height={12} width="60%" radius="md" mb={8} />
-                <Skeleton height={24} width="40%" radius="md" />
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Notification Types Skeleton */}
-      <Card className="rounded-xl max-w-md" padding="lg">
+      {/* Notification Preferences Skeleton */}
+      <Card className="rounded-2xl" padding="lg">
         <Skeleton height={16} width={140} radius="md" mb={16} />
         <div className="space-y-4">
           <Skeleton height={48} radius="md" />
           <Skeleton height={48} radius="md" />
         </div>
+      </Card>
+
+      {/* Manage Subscription Skeleton */}
+      <Card className="rounded-2xl" padding="lg">
+        <Skeleton height={16} width={160} radius="md" mb={8} />
+        <Skeleton height={14} width="70%" radius="md" />
       </Card>
     </div>
   );
@@ -111,6 +113,7 @@ export function SubscriptionDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -139,6 +142,40 @@ export function SubscriptionDashboard() {
     fetchDashboard(); // Refresh data after cancellation
   };
 
+  const handleCancel = async () => {
+    if (!data?.currentPlan.accessPeriodId) return;
+
+    setCancelling(true);
+    try {
+      const response = await fetch('/api/subscriptions/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessPeriodId: data.currentPlan.accessPeriodId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel subscription');
+      }
+
+      const result = await response.json();
+      toast.success(result.message || 'Subscription cancelled');
+      fetchDashboard();
+    } catch (err) {
+      console.error('Error cancelling:', err);
+      toast.error('Failed to cancel subscription');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
   if (loading) {
     return <DashboardSkeleton />;
   }
@@ -147,27 +184,61 @@ export function SubscriptionDashboard() {
     return <DashboardError onRetry={fetchDashboard} />;
   }
 
+  const isPremium = data.currentPlan.status !== 'free' && data.currentPlan.tierId !== '1hour';
+  const canCancel = isPremium && data.currentPlan.status === 'active' && data.currentPlan.accessPeriodId;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-2xl">
       {/* Current Plan Hero */}
       <CurrentPlanHero
         plan={data.currentPlan}
         onCancel={handleCancelSuccess}
       />
 
-      {/* Stats Grid */}
-      <SubscriptionStats
-        stats={{
-          daysRemaining: data.currentPlan.daysRemaining,
-          activeAlerts: data.stats.activeAlerts,
-          notificationsSent: data.stats.notificationsSent,
-          checksPerDay: data.currentPlan.checksPerDay,
-        }}
-        status={data.currentPlan.status}
-      />
-
-      {/* Notification Types */}
+      {/* Notification Preferences */}
       <NotificationPreferences prefs={data.notificationPrefs} />
+
+      {/* Manage Subscription Section */}
+      <Card className="rounded-2xl" padding="lg">
+        <h3 className="font-semibold mb-2">Manage Subscription</h3>
+        {canCancel ? (
+          <>
+            <p className="text-sm text-muted-foreground mb-4">
+              Need to cancel? Your access will continue until {data.currentPlan.expiresAt ? formatDate(data.currentPlan.expiresAt) : 'your expiration date'}.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="subtle" color="red" loading={cancelling}>
+                  Cancel Subscription
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Your subscription will remain active until{' '}
+                    <strong>{data.currentPlan.expiresAt && formatDate(data.currentPlan.expiresAt)}</strong>.
+                    You'll have {data.currentPlan.daysRemaining} days of access remaining.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleCancel}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Cancel Subscription
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No active subscription to manage.
+          </p>
+        )}
+      </Card>
     </div>
   );
 }

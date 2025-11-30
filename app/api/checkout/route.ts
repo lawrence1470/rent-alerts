@@ -33,16 +33,19 @@ export async function POST(request: Request) {
       );
     }
 
-    if (weeks < 1 || weeks > 52) {
+    // Only 15min tier is available for purchase
+    if (tierId !== '15min') {
       return NextResponse.json(
-        { error: 'Weeks must be between 1 and 52' },
+        { error: 'Invalid tier: only 15min tier is available' },
         { status: 400 }
       );
     }
 
-    if (tierId === '1hour') {
+    // Only monthly pack durations allowed: 1, 2, or 3 months
+    const VALID_WEEK_OPTIONS = [4, 8, 12];
+    if (!VALID_WEEK_OPTIONS.includes(weeks)) {
       return NextResponse.json(
-        { error: 'Free tier does not require payment' },
+        { error: 'Invalid duration: must be 4, 8, or 12 weeks' },
         { status: 400 }
       );
     }

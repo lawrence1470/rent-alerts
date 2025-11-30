@@ -86,16 +86,14 @@ export function requiresPayment(tierId: TierId): boolean {
 }
 
 /**
- * Get discount percentage based on number of weeks
- * - 1-3 weeks: 0%
- * - 4-7 weeks: 10%
- * - 8-11 weeks: 20%
- * - 12+ weeks: 30%
+ * Get discount percentage based on monthly packs
+ * - 1 month (4 weeks): 0%
+ * - 2 months (8 weeks): 10%
+ * - 3 months (12 weeks): 20%
  */
 export function getDiscountPercent(weeks: number): number {
-  if (weeks >= 12) return 30;
-  if (weeks >= 8) return 20;
-  if (weeks >= 4) return 10;
+  if (weeks >= 12) return 20;
+  if (weeks >= 8) return 10;
   return 0;
 }
 
