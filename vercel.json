@@ -1,13 +1,3 @@
 {
-  "buildCommand": "rm -rf .next && npm run build && npm run test -- --run",
-  "crons": [
-    {
-      "path": "/api/cron/check-alerts",
-      "schedule": "0/15 * * * *"
-    },
-    {
-      "path": "/api/cron/cleanup-audit-logs",
-      "schedule": "0 2 * * *"
-    }
-  ]
+  "buildCommand": "rm -rf .next && npm run build && npm run test -- --run"
 }
