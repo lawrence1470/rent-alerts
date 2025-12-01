@@ -9,6 +9,7 @@ import { Resend } from 'resend';
 import type { Listing, Alert } from '../schema';
 import RentalNotificationEmail from '../templates/rental-notification-email';
 import RentalDigestEmail, { type DigestListing } from '../templates/rental-digest-email';
+import WelcomeEmail from '../templates/welcome-email';
 
 // ============================================================================
 // TYPES
@@ -327,6 +328,59 @@ export function getErrorMessage(error: unknown): string {
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
+
+/**
+ * Sends a welcome email to new users
+ * Called when a user first signs up via Clerk webhook
+ */
+export async function sendWelcomeEmail(
+  email: string,
+  firstName?: string
+): Promise<EmailResult> {
+  try {
+    // Check if email is enabled
+    if (!isEmailEnabled()) {
+      console.warn('Email service not enabled - skipping welcome email');
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Validate recipient email
+    if (!validateEmailAddress(email)) {
+      return {
+        success: false,
+        error: 'Invalid recipient email address',
+      };
+    }
+
+    // Render the welcome email template
+    const { render } = require('@react-email/components');
+    const html = await render(WelcomeEmail({ firstName }));
+
+    // Send the email
+    const result = await sendEmail({
+      to: email,
+      subject: 'Welcome to Rent Notify — Let\'s Find Your NYC Apartment',
+      html,
+    });
+
+    if (result.success) {
+      console.log(`✉️ Welcome email sent to ${email}`);
+    } else {
+      console.error(`Failed to send welcome email to ${email}:`, result.error);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
 
 /**
  * Tests email configuration by sending a test email

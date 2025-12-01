@@ -12,6 +12,7 @@ import { WebhookEvent } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
+import { sendWelcomeEmail } from '@/lib/services/email.service';
 
 /**
  * POST handler for Clerk webhooks
@@ -120,6 +121,15 @@ export async function POST(req: Request) {
           });
 
         console.log(`User ${eventType === 'user.created' ? 'created' : 'updated'}: ${id} (${email})`);
+
+        // Send welcome email for new users only
+        if (eventType === 'user.created') {
+          // Fire and forget - don't block the webhook response
+          sendWelcomeEmail(email, first_name || undefined).catch((err) => {
+            console.error('Failed to send welcome email:', err);
+          });
+        }
+
         break;
       }
 
