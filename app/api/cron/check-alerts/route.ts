@@ -35,7 +35,7 @@ function isProductionEnvironment(request: NextRequest): boolean {
   const productionDomains = [
     'rentnotify.com',
     'www.rentnotify.com',
-    'rent-alerts.vercel.app', // Your main Vercel production URL
+    'rentnotify.vercel.app', // Your main Vercel production URL
   ];
 
   return productionDomains.some(domain => host.includes(domain));

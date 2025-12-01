@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { HelpCircle } from 'lucide-react';
 
 export const metadata = {
-  title: 'Pricing - Rental Notifications',
+  title: 'Pricing - Rent Notify',
   description: 'Choose your notification frequency tier',
 };
 
