@@ -8,7 +8,7 @@ on:
 
 jobs:
   check-alerts-production:
-    name: Check Alerts (Production)
+    name: Check Alerts (Production Only)
     runs-on: ubuntu-latest
     steps:
       - name: Call production cron endpoint
@@ -17,14 +17,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -f -v
 
-  check-alerts-preview:
-    name: Check Alerts (Preview)
-    runs-on: ubuntu-latest
-    # Only run if preview URL is configured
-    if: vars.PREVIEW_URL != ''
-    steps:
-      - name: Call preview cron endpoint
-        run: |
-          curl -X GET "${{ vars.PREVIEW_URL }}/api/cron/check-alerts" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -f -v || echo "Preview cron failed - this is expected if preview deployment doesn't exist"
+# NOTE: Preview/localhost alerts are DISABLED by default
+# The API endpoint blocks automatic triggers on non-production environments
+# To manually test alerts on preview/localhost, use:
+#   curl -X GET "https://<preview-url>/api/cron/check-alerts?manual=true" \
+#     -H "Authorization: Bearer <CRON_SECRET>"
