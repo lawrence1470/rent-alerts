@@ -33,10 +33,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Only 15min tier is available for purchase
-    if (tierId !== '15min') {
+    // Only monthly and 15min tiers are available for purchase
+    if (tierId !== 'monthly' && tierId !== '15min') {
       return NextResponse.json(
-        { error: 'Invalid tier: only 15min tier is available' },
+        { error: 'Invalid tier: only monthly and 15min tiers are available' },
         { status: 400 }
       );
     }

@@ -32,6 +32,7 @@ function shouldCheckAlert(alert: any): boolean {
     '30min': 30,
     '1hour': 60,
     '1hour-sms': 60,
+    'monthly': 15, // Monthly plan has 15-minute checks
   }[alert.preferredFrequency as TierId] || 60;
 
   // Calculate if current time is a scheduled window for this frequency
