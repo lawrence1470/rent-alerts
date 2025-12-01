@@ -14,9 +14,9 @@ import { cn } from '@/lib/utils';
 // CONFIGURATION
 // ============================================
 
-// Single subscription: 15-Minute tier
-const BASE_PRICE_PER_WEEK = 2000; // $20.00 in cents
-const TIER_ID = '15min';
+// Single subscription: Monthly plan at $15/month
+const BASE_PRICE_PER_WEEK = 375; // $3.75/week = $15/month in cents
+const TIER_ID = 'monthly';
 
 // Duration options for monthly packs
 const DURATION_OPTIONS = [

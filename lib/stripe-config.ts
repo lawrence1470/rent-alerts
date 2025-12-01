@@ -46,6 +46,13 @@ export const TIER_CONFIG = {
     interval: '15 minutes',
     checksPerDay: 96,
   },
+  'monthly': {
+    id: 'monthly',
+    name: 'Monthly Plan',
+    pricePerWeek: 375, // $3.75/week = $15/month (4 weeks)
+    interval: '15 minutes',
+    checksPerDay: 96,
+  },
 } as const;
 
 export type TierId = keyof typeof TIER_CONFIG;
