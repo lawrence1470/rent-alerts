@@ -21,7 +21,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: {
     default: "NYC Apartment Alerts | Instant Rental Notifications in New York City",
-    template: "%s | NYC Rental Notifications",
+    template: "%s | Rent Notify",
   },
   description: "Get instant SMS and email alerts for NYC apartments. Track rent-stabilized units, set custom search criteria, and never miss your perfect Manhattan, Brooklyn, or Queens rental. Free trial available.",
   keywords: [
@@ -36,9 +36,9 @@ export const metadata: Metadata = {
     "StreetEasy alerts",
     "NYC apartment finder"
   ],
-  authors: [{ name: "Rental Notifications" }],
-  creator: "Rental Notifications",
-  publisher: "Rental Notifications",
+  authors: [{ name: "Rent Notify" }],
+  creator: "Rent Notify",
+  publisher: "Rent Notify",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   alternates: {
     canonical: '/',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    siteName: 'NYC Rental Notifications',
+    siteName: 'Rent Notify',
     title: 'NYC Apartment Alerts - Never Miss Your Perfect NYC Rental',
     description: 'Get instant SMS and email alerts for NYC apartments. Track rent-stabilized units in Manhattan, Brooklyn, and Queens. Free trial available.',
     images: [
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
         url: '/og.png',
         width: 1200,
         height: 630,
-        alt: 'NYC Rental Notifications - Find Your Perfect Apartment',
+        alt: 'Rent Notify - Find Your Perfect NYC Apartment',
       },
     ],
   },
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: 'NYC Apartment Alerts - Never Miss Your Perfect NYC Rental',
     description: 'Get instant SMS and email alerts for NYC apartments. Track rent-stabilized units. Free trial available.',
     images: ['/og.png'],
-    creator: '@rentalnotifs',
+    creator: '@rentnotify',
   },
   robots: {
     index: true,

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "NYC Rental Notifications",
+  "name": "Rent Notify",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
   "offers": [
@@ -94,7 +94,7 @@ const localBusinessData = {
   "serviceType": "Rental Notification Service",
   "provider": {
     "@type": "Organization",
-    "name": "NYC Rental Notifications"
+    "name": "Rent Notify"
   },
   "areaServed": [
     {
